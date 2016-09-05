@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" output="target/classes" path="src/main/java">
+		<attributes>
+			<attribute name="optional" value="true"/>
+			<attribute name="maven.pomderived" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="src" output="target/test-classes" path="src/test/java">
+		<attributes>
+			<attribute name="optional" value="true"/>
+			<attribute name="maven.pomderived" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="src" path="src/main/resources"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="con" path="org.eclipse.m2e.MAVEN2_CLASSPATH_CONTAINER">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="src" path="/imglib2"/>
+	<classpathentry kind="lib" path="/imglib2-algorithm"/>
+	<classpathentry kind="lib" path="/imglib2-algorithm-fft"/>
+	<classpathentry kind="lib" path="/imglib2-algorithm-gpl"/>
+	<classpathentry kind="lib" path="/Users/varunkapoor/.m2/repository/net/imagej/ij/1.49p/ij-1.49p.jar">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.groupId" value="net.imagej"/>
+			<attribute name="maven.artifactId" value="ij"/>
+			<attribute name="maven.version" value="1.49p"/>
+			<attribute name="maven.scope" value="compile"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="/Users/varunkapoor/.m2/repository/net/imagej/ij/1.49q/ij-1.49q.jar" sourcepath="/Users/varunkapoor/.m2/repository/net/imagej/ij/1.49q/ij-1.49q-sources.jar">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.groupId" value="net.imagej"/>
+			<attribute name="maven.artifactId" value="ij"/>
+			<attribute name="maven.version" value="1.49q"/>
+			<attribute name="maven.scope" value="compile"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="output" path="target/classes"/>
+</classpath>
