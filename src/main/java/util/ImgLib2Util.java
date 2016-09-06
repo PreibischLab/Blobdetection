@@ -82,14 +82,14 @@ public class ImgLib2Util {
 		return img;
 	}
 
-	public static void main( String[] args )
-	{
-		new ImageJ();
+//	public static void main( String[] args )
+	//{
+	//	new ImageJ();
 		
-		final Img< FloatType > img = openAs32Bit( new File( "src/main/resources/mri-stack.tif" ) );
+	//	final Img< FloatType > img = openAs32Bit( new File( "src/main/resources/mri-stack.tif" ) );
 		//final Img< FloatType > img = openAs32Bit( new File( "src/main/resources/bridge.png" ) );
 		
-		ImageJFunctions.show( img );
-	}
+	//	ImageJFunctions.show( img );
+	//}
 	
 }
