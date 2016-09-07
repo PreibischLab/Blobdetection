@@ -67,7 +67,9 @@ public class Watersheddding {
 		final RealPointSampleList<BitType> list = new RealPointSampleList<BitType>(n);
 
 		final Float threshold = GlobalThresholding.AutomaticThresholding(inputimg);
-		GetLocalmaxmin.ThresholdingBit(inputimg, bitimg, threshold);
+		
+		Float val = new Float(0.5*threshold);
+		GetLocalmaxmin.ThresholdingBit(inputimg, bitimg, val);
 
 		// cursor on the binary image
 		final Cursor<BitType> cursor = bitimg.localizingCursor();

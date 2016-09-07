@@ -46,16 +46,17 @@ public class Segmentbywatershed {
 			DogDetection<FloatType> newdog = new DogDetection<FloatType>(Views.extendMirrorSingle(outimg), range,
 					new double[] { 1, 1 }, Math.min(sizeofblob[0], sizeofblob[1]), Math.min(sizeofblob[0], sizeofblob[1]) + 0.1,
 					DogDetection.ExtremaType.MINIMA,
-					val, true);
+					 val, true);
 			
 			// Detect minima in Scale space
 			SubpixelMinlist = newdog.getSubpixelPeaks();
+			
               for (int index = 0; index < SubpixelMinlist.size(); ++index){
 				
-				TotalMinlist.add(SubpixelMinlist.get(index));
-				
-				
+				  TotalMinlist.add(SubpixelMinlist.get(index));
 			}
+            
+             
 		}
 	
 		
