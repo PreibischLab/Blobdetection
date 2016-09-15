@@ -511,11 +511,46 @@ import ij.ImageJ;
 			return maxintensity;
 		}
 		
-		public static long[] computeMaxinLabel(
+		public static Point computeMaxinLabel(
+				final RandomAccessibleInterval<FloatType> inputimg,
+				final RandomAccessibleInterval<IntType> intimg,
+				final int label) {
+
+			final int ndims = inputimg.numDimensions();
+			final Cursor<IntType> intcursor = Views.iterable(intimg).localizingCursor();
+			final RandomAccess<FloatType> ranac = inputimg.randomAccess();
+			
+			// initialize min and max with the first image value
+			double max = Double.MIN_VALUE;
+			Point pos = new Point(ndims);
+			while(intcursor.hasNext()){
+				intcursor.fwd();
+				
+				final int i = intcursor.get().get();
+				
+				if (i == label){
+					ranac.setPosition(intcursor);
+					if (ranac.get().get() > max){
+						max = ranac.get().getRealDouble();
+							
+							pos.setPosition(ranac) ;
+						
+					}
+					
+				}
+				
+				
+			}
+			
+			
+					return pos;
+		}
+
+		public static double[] computehalfMaxinLabel(
 				final RandomAccessibleInterval<FloatType> inputimg,
 				final RandomAccessibleInterval<IntType> intimg,
 				final int label,
-				boolean ignorebright) {
+				final double maxIntensity) {
 
 			final Cursor<IntType> intcursor = Views.iterable(intimg).localizingCursor();
 			final RandomAccess<FloatType> ranac = inputimg.randomAccess();
@@ -527,8 +562,7 @@ import ij.ImageJ;
 			final Float threshold = (pair.snd.get() - pair.fst.get())/4;
 			
 			// initialize min and max with the first image value
-			double max = Double.MIN_VALUE;
-			long[] pos = new long[inputimg.numDimensions()];
+			double[] pos = new double[inputimg.numDimensions()];
 			while(intcursor.hasNext()){
 				intcursor.fwd();
 				
@@ -536,8 +570,8 @@ import ij.ImageJ;
 				
 				if (i == label){
 					ranac.setPosition(intcursor);
-					if (ranac.get().get() > max){
-						max = ranac.get().getRealDouble();
+					if (ranac.get().get() <= maxIntensity/ 2 && ranac.get().get() >= maxIntensity/ 4  ){
+					
 							
 							ranac.localize(pos);
 						
@@ -548,20 +582,11 @@ import ij.ImageJ;
 				
 			}
 			
-	      if (ignorebright == true){
-				
-				if (max<= threshold)
+	   
 			
 					return pos;
-			}
-	      if (ignorebright == false)
-	    	  return pos;
 			
-	      else
-			return null;
 		}
-
-		
 		
 		
 		// Find maxima only if the pixel intensity is higher than a certain

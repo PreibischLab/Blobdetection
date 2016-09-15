@@ -2,12 +2,17 @@ package runTracker;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Map;
+
+import org.jgrapht.graph.DefaultWeightedEdge;
+import org.jgrapht.graph.SimpleWeightedGraph;
 
 import blobList.Makebloblist;
 import fiji.tool.SliceListener;
 import fiji.tool.SliceObserver;
 import ij.ImageJ;
 import ij.ImagePlus;
+import net.imglib2.FinalInterval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.stats.Normalize;
 import net.imglib2.img.array.ArrayImgFactory;
@@ -18,6 +23,7 @@ import net.imglib2.type.numeric.integer.IntType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
+import overlaytrack.Overlaytrack;
 import segmentBlobs.Getobjectproperties;
 import segmentBlobs.Staticproperties;
 import trackerType.NNsearch;
@@ -30,7 +36,7 @@ public class Trackblobs {
 
 		// Load the stack of images
 		final RandomAccessibleInterval<FloatType> img = util.ImgLib2Util
-				.openAs32Bit(new File("src/main/resources/15stackimage.tif"), new ArrayImgFactory<FloatType>());
+				.openAs32Bit(new File("src/main/resources/5framestack.tif"), new ArrayImgFactory<FloatType>());
 	//	ImagePlus imp = ImageJFunctions.show(img);
 		
 		// add listener to the imageplus slice slider
@@ -53,31 +59,31 @@ public class Trackblobs {
 		// Display stack
 		ImageJFunctions.show(img);
 
-		final double maxsqdistance = 100;
-		IntervalView<FloatType> globalbaseframe = Views.hyperSlice(img, ndims - 1, 0);
+		final double maxsqdistance = 2500;
+		final int minDiameter = 2;
+		final int maxDiameter = 40;
+		IntervalView<FloatType> baseframe = Views.hyperSlice(img, ndims - 1, 0);
+		ArrayList<ArrayList<Staticproperties>> Allspots = new ArrayList<ArrayList<Staticproperties>>();
 		
-		ArrayList<double[]> tracklist = new ArrayList<double[]>();
-		for (int i = 1; i < img.dimension(ndims - 1) ; ++i) {
-
-			IntervalView<FloatType> baseframe = Views.hyperSlice(img, ndims - 1, i - 1);
-			IntervalView<FloatType> targetframe = Views.hyperSlice(img, ndims - 1, i);
-			
-			System.out.println("Starting nearest neighbour tracking in :" + " Frame: " + (i - 1) + " and " + i
-					+ " out of " + img.dimension(ndims - 1) + " Frames");
-			
-			ArrayList<Staticproperties> Spotmaxbase = Makebloblist.returnBloblist(baseframe);
-			ArrayList<Staticproperties> Spotmaxtarget = Makebloblist.returnBloblist(targetframe);
-			// Create an object for NN search
-			NNsearch  NNsearchsimple = new NNsearch(baseframe, targetframe, Spotmaxbase, Spotmaxtarget, maxsqdistance );
-			
-			NNsearchsimple.process();
-			NNsearchsimple.getResult();
-			
+		
+		for (int i = 0; i < img.dimension(ndims - 1) ; ++i) {
+			IntervalView<FloatType> currentframe = Views.hyperSlice(img, ndims - 1, i);
+			Allspots.add( i,  Makebloblist.returnBloblist(currentframe, minDiameter, maxDiameter));
+			System.out.println("Finding blobs in Frame: " + i);
 		}
 		
+			// Create an object for NN search
+			NNsearch  NNsearchsimple = new NNsearch(Allspots, maxsqdistance, img.dimension(ndims - 1)  );
+			
+			NNsearchsimple.process();
+			
+			SimpleWeightedGraph<Staticproperties, DefaultWeightedEdge> graph = NNsearchsimple.getResult();
+			
+			
+			overlaytrack.DisplayGraph.displaytracks(baseframe,graph);
 		
 		
-		//overlaytrack.Overlaytrack.Overlaynearest(globalbaseframe, tracklist);
+		
 	}
 
 	protected static class ImagePlusListener implements SliceListener

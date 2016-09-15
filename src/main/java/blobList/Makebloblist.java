@@ -12,7 +12,8 @@ import segmentBlobs.Staticproperties;
 public class Makebloblist {
 
 	
-	public static ArrayList<Staticproperties> returnBloblist(IntervalView<FloatType> baseframe){
+	public static ArrayList<Staticproperties> returnBloblist(final IntervalView<FloatType> baseframe, 
+			final int minDiameter, final int maxDiameter){
 		
 		RandomAccessibleInterval<IntType> labelledimagebase = new ArrayImgFactory<IntType>().create(baseframe,
 				new IntType());
@@ -23,7 +24,7 @@ public class Makebloblist {
 		
 		// List containing all the maximas in baseframe
 		ArrayList<Staticproperties> Spotmaxbase = segmentBlobs.Segmentbywatershed.DoGdetection(baseframe,
-				labelledimagebase);
+				labelledimagebase, minDiameter, maxDiameter);
 		
 		
 		return Spotmaxbase;

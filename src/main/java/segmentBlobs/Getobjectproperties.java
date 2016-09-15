@@ -4,11 +4,17 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import com.sun.tools.javac.util.Pair;
+
 import ij.ImageJ;
 import net.imglib2.Cursor;
+import net.imglib2.Localizable;
+import net.imglib2.Point;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.labeling.AllConnectedComponents;
+import net.imglib2.algorithm.region.hypersphere.HyperSphere;
+import net.imglib2.algorithm.region.hypersphere.HyperSphereCursor;
 import net.imglib2.algorithm.stats.Normalize;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.display.imagej.ImageJFunctions;
@@ -28,103 +34,60 @@ public class Getobjectproperties {
 	// returns the maxextent between these co-ordinates
 
 	private final RandomAccessibleInterval<FloatType> inputimg;
-	private final RandomAccessibleInterval<IntType> seedimg;
+	private final RandomAccessibleInterval<IntType> labelledimg;
 	private final int ndims;
-
+	private final int minRadius;
+	private final int maxRadius;
 	
-	public Getobjectproperties(final RandomAccessibleInterval<FloatType> inputimg, RandomAccessibleInterval<IntType> seedimg){
+	
+	public Getobjectproperties(final RandomAccessibleInterval<FloatType> inputimg, 
+			final RandomAccessibleInterval<IntType> labelledimg, final int minRadius, final int maxRadius){
 		this.inputimg = inputimg;
-		this.seedimg = seedimg;
+		this.labelledimg = labelledimg;
 		this.ndims = inputimg.numDimensions();
-		
+		this.minRadius = minRadius;
+		this.maxRadius = maxRadius;
 		
 	}
-	// This is the connected component bit, all the objects that are connected
-	// in the image are given a unique label
-	public NativeImgLabeling<Integer, IntType> PrepareSeedImage() {
-
-		// Preparing the seed image
-		RandomAccessibleInterval<BitType> maximgBit = new ArrayImgFactory<BitType>().create(inputimg, new BitType());
-		final Float threshold = GlobalThresholding.AutomaticThresholding(inputimg);
-		GetLocalmaxmin.ThresholdingBit(inputimg, maximgBit, threshold);
-
-		// Old Labeling type
-		final NativeImgLabeling<Integer, IntType> oldseedLabeling = new NativeImgLabeling<Integer, IntType>(
-				new ArrayImgFactory<IntType>().create(inputimg, new IntType()));
-
-		// The label generator, I label the background to be 0
-		final Iterator<Integer> labelGenerator = AllConnectedComponents.getIntegerNames(0);
-
-		// Getting unique labelled image (old version)
-		AllConnectedComponents.labelAllConnectedComponents(oldseedLabeling, maximgBit, labelGenerator,
-				AllConnectedComponents.getStructuringElement(inputimg.numDimensions()));
-
-		return oldseedLabeling;
-	}
+	
 
 	// Once we have the label we get bounding box (BB for each of the labels, we
 	// can only choose to get the BB for the largest region
 	// after neglecting the background which carries the label 0
 	public  Objprop Getobjectprops( int currentlabel) {
 
-		Cursor<IntType> intCursor = Views.iterable(seedimg).localizingCursor();
+		Cursor<IntType> intCursor = Views.iterable(labelledimg).localizingCursor();
 		RandomAccess<FloatType> ranac = inputimg.randomAccess();
 
-		long[] position = new long[ndims];
-
+		double[] position = new double[ndims];
+		double[] maxIntensityposition = new double[ndims];
 		// Go through the whole image and add every pixel, that belongs to
 			// the currently processed label
 
 			double[] minVal = { Double.MAX_VALUE, Double.MAX_VALUE };
-			double[] maxVal = { Double.MIN_VALUE, Double.MIN_VALUE };
-			int area = 0;
+			double[] maxVal = { -Double.MIN_VALUE, -Double.MIN_VALUE };
+			double maxIntensity = -Double.MIN_VALUE;
+			double area = 0;
+			double Radius = 0;
 			double totalintensity = 0;
-			while (intCursor.hasNext()) {
-				intCursor.fwd();
-
-				int i = intCursor.get().get();
-				// Now we are going inside a labelled space
-				if (i == currentlabel) {
-					area++;
-					
-
-					ranac.setPosition(intCursor);
-					ranac.localize(position);
-					
-					// Here we compute the bounding box for each labelled space
-					for (int d = 0; d < ndims; ++d) {
-						if (position[d] < minVal[d]) {
-							minVal[d] = position[d];
-						}
-						if (position[d] > maxVal[d]) {
-							maxVal[d] = position[d];
-						}
-
-					}
-					
-					final RealSum realSumA = new RealSum();
-					
-
-					final FloatType type = ranac.get();
-					
-						realSumA.add(type.getRealDouble());
+			
 					
 					
-					 totalintensity = realSumA.getSum() / area;
+					maxIntensity = GetLocalmaxmin.computeMaxIntensityinlabel(inputimg, labelledimg, currentlabel);
+					Point pos = GetLocalmaxmin.computeMaxinLabel(inputimg,labelledimg,currentlabel);
+						
+						Pair<Integer, Double> pair = EstimatedRadius(pos, minRadius, maxRadius);
+						Radius = pair.fst;
+						totalintensity = pair.snd;
+						area = Math.PI * Radius * Radius ;
+				
+				
 
-				}
-
-			}
-			// Get the maxextent between min and max co-ordinates of the box
-			// computed
-
-			double diameter = 0;
-			for (int d = 0; d < ndims; ++d)
-				diameter += (maxVal[d] - minVal[d]) * (maxVal[d] - minVal[d]);
-
+			
+			
 			// Store all object properties in the java object and arraylist of
 			// that object
-			final Objprop props = new Objprop(currentlabel, Math.sqrt(diameter), area, totalintensity,  minVal, maxVal);
+			final Objprop props = new Objprop(currentlabel, 2 * Radius , area, totalintensity);
 			
 
 			return props;
@@ -132,5 +95,68 @@ public class Getobjectproperties {
 		
 
 	}
+	
+	public Pair<Integer, Double> EstimatedRadius(Localizable point, int minRadius, int maxRadius){
+		
+		int BlobRadius = 0;
+		double Blobintensity = 0;
+		double maxdiff = -Double.MAX_VALUE;
+		int nRadius = maxRadius - minRadius;
+		
+		final double[] totalintensity = new double[nRadius];
+		
+		for (int Radius = 0; Radius < nRadius; ++Radius){
+			
+			HyperSphere<FloatType> sphere = new HyperSphere<FloatType>(inputimg, point, Radius + minRadius);
+			
+			HyperSphereCursor<FloatType> sphereCursor = sphere.localizingCursor();
+			
+			while(sphereCursor.hasNext()){
+				
+				sphereCursor.fwd();
+				
+				final RealSum realSumA = new RealSum();
+				
 
+				final FloatType type = sphereCursor.get();
+				
+					realSumA.add(type.getRealDouble());
+				
+				
+				 totalintensity[Radius] = realSumA.getSum();
+				
+			}
+			
+			
+		}
+		
+		for (int Radius = 0; Radius < nRadius - 1; ++Radius){
+			
+			if (totalintensity[Radius] - totalintensity[Radius + 1] > maxdiff){
+				
+				maxdiff = totalintensity[Radius] - totalintensity[Radius + 1];
+				
+				BlobRadius = Radius + minRadius;
+				
+				Blobintensity = totalintensity[Radius];
+			}
+		}
+		
+		Pair<Integer, Double> pair = new Pair<Integer, Double>(BlobRadius, Blobintensity);
+		
+		return pair;
+	}
+	
+	public  double Distance(final double[] cordone, final double[] cordtwo) {
+
+		double distance = 0;
+		final double ndims = cordone.length;
+
+		for (int d = 0; d < ndims; ++d) {
+
+			distance += Math.pow((cordone[d] - cordtwo[d]), 2);
+
+		}
+		return Math.sqrt(distance);
+	}
 }
