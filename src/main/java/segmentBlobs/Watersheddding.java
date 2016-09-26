@@ -68,7 +68,9 @@ public class Watersheddding {
 
 		final Float threshold = GlobalThresholding.AutomaticThresholding(inputimg);
 		
-		Float val = new Float(0.5*threshold);
+		Float val = new Float(threshold);
+		
+		System.out.println("Threshold Value for dist transform: "+ val);
 		GetLocalmaxmin.ThresholdingBit(inputimg, bitimg, val);
 
 		// cursor on the binary image

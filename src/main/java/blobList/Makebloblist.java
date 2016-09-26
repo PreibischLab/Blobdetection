@@ -1,6 +1,7 @@
 package blobList;
 
 import java.util.ArrayList;
+import java.util.Set;
 
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.array.ArrayImgFactory;
@@ -19,7 +20,7 @@ public class Makebloblist {
 				new IntType());
 
 	
-		// Find Maxima of blobs by segmenting the image via watershed
+		// Segmenting the image via watershed
 		labelledimagebase = segmentBlobs.Segmentbywatershed.getsegmentedimage(baseframe);
 		
 		// List containing all the maximas in baseframe
@@ -29,4 +30,20 @@ public class Makebloblist {
 		
 		return Spotmaxbase;
 	}
+	
+	
+	
+	public static void remove( final Staticproperties spot, final ArrayList<ArrayList<Staticproperties>> blobsinframe, final Integer frame )
+	{
+		
+		 blobsinframe.get(frame).remove( spot );
+	}
+	
+	public static void add( final Staticproperties spot, final ArrayList<ArrayList<Staticproperties>> blobsinframe, final Integer frame )
+	{
+		
+		 blobsinframe.get(frame).add( spot );
+	}
+	
+	
 }

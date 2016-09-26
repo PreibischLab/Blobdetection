@@ -56,33 +56,18 @@ public class Getobjectproperties {
 	// after neglecting the background which carries the label 0
 	public  Objprop Getobjectprops( int currentlabel) {
 
-		Cursor<IntType> intCursor = Views.iterable(labelledimg).localizingCursor();
-		RandomAccess<FloatType> ranac = inputimg.randomAccess();
-
-		double[] position = new double[ndims];
-		double[] maxIntensityposition = new double[ndims];
-		// Go through the whole image and add every pixel, that belongs to
-			// the currently processed label
-
-			double[] minVal = { Double.MAX_VALUE, Double.MAX_VALUE };
-			double[] maxVal = { -Double.MIN_VALUE, -Double.MIN_VALUE };
-			double maxIntensity = -Double.MIN_VALUE;
 			double area = 0;
 			double Radius = 0;
 			double totalintensity = 0;
 			
 					
 					
-					maxIntensity = GetLocalmaxmin.computeMaxIntensityinlabel(inputimg, labelledimg, currentlabel);
 					Point pos = GetLocalmaxmin.computeMaxinLabel(inputimg,labelledimg,currentlabel);
 						
 						Pair<Integer, Double> pair = EstimatedRadius(pos, minRadius, maxRadius);
 						Radius = pair.fst;
 						totalintensity = pair.snd;
 						area = Math.PI * Radius * Radius ;
-				
-				
-
 			
 			
 			// Store all object properties in the java object and arraylist of
@@ -123,7 +108,7 @@ public class Getobjectproperties {
 					realSumA.add(type.getRealDouble());
 				
 				
-				 totalintensity[Radius] = realSumA.getSum();
+				    totalintensity[Radius] = realSumA.getSum();
 				
 			}
 			

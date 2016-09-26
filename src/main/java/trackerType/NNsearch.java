@@ -45,7 +45,6 @@ public class NNsearch implements Blob {
 
 	private final ArrayList<ArrayList<Staticproperties>> Allblobs;
 	private final double maxdistance;
-	
 	private final long maxframe;
 	private SimpleWeightedGraph< Staticproperties, DefaultWeightedEdge > graph;
 	protected Logger logger = Logger.DEFAULT_LOGGER;
@@ -101,6 +100,8 @@ public class NNsearch implements Blob {
 				
 			}
 			
+			if (targetNodes.size() > 0 && targetCoords.size() > 0){
+			
 			final KDTree<FlagNode<Staticproperties>> Tree = new KDTree<FlagNode<Staticproperties>>(targetNodes, targetCoords);
 			
 			final NNFlagsearchKDtree<Staticproperties> Search = new NNFlagsearchKDtree<Staticproperties>(Tree);
@@ -117,7 +118,7 @@ public class NNsearch implements Blob {
 				final FlagNode<Staticproperties> targetNode = Search.getSampler().get();
 				if (squareDist > maxdistance)
 					continue;
-				
+
 				targetNode.setVisited(true);
 				
 				synchronized (graph) {
@@ -135,7 +136,7 @@ public class NNsearch implements Blob {
 			
 			System.out.println("NN detected, moving to next frame!");
 		}
-		
+		}
 		
 			return true;
 			

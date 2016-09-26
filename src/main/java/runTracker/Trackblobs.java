@@ -23,7 +23,7 @@ import net.imglib2.type.numeric.integer.IntType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
-import overlaytrack.Overlaytrack;
+import overlaytrack.DisplayGraph;
 import segmentBlobs.Getobjectproperties;
 import segmentBlobs.Staticproperties;
 import trackerType.NNsearch;
@@ -36,19 +36,22 @@ public class Trackblobs {
 
 		// Load the stack of images
 		final RandomAccessibleInterval<FloatType> img = util.ImgLib2Util
-				.openAs32Bit(new File("src/main/resources/5framestack.tif"), new ArrayImgFactory<FloatType>());
-	//	ImagePlus imp = ImageJFunctions.show(img);
+				.openAs32Bit(new File("src/main/resources/15framenoisyblobs.tif"), new ArrayImgFactory<FloatType>());
 		
-		// add listener to the imageplus slice slider
-	//	SliceObserver sliceObserver = new SliceObserver( imp, new ImagePlusListener() );
 		
-	//	SimpleMultiThreading.threadHaltUnClean();
+		
+		
 		int ndims = img.numDimensions();
 		new Normalize();
 
 		FloatType minval = new FloatType(0);
 		FloatType maxval = new FloatType(1);
 		Normalize.normalize(Views.iterable(img), minval, maxval);
+		
+		ImagePlus imp = ImageJFunctions.show(img);
+		
+		
+		
 		// 5 frame image: 5framestack.tif
 		// 15 frame image: 15stackimage.tif
 		// Noisy : 15framenoisyblobs.tif
@@ -57,12 +60,11 @@ public class Trackblobs {
 		// Actual data
 		// /Users/varunkapoor/Documents/Pierre_data/Latest_video/mCherry_ShortET.tif
 		// Display stack
-		ImageJFunctions.show(img);
+		//ImageJFunctions.show(img);
 
-		final double maxsqdistance = 2500;
-		final int minDiameter = 2;
+		final double maxsqdistance = 1000;
+		final int minDiameter = 5;
 		final int maxDiameter = 40;
-		IntervalView<FloatType> baseframe = Views.hyperSlice(img, ndims - 1, 0);
 		ArrayList<ArrayList<Staticproperties>> Allspots = new ArrayList<ArrayList<Staticproperties>>();
 		
 		
@@ -78,21 +80,14 @@ public class Trackblobs {
 			NNsearchsimple.process();
 			
 			SimpleWeightedGraph<Staticproperties, DefaultWeightedEdge> graph = NNsearchsimple.getResult();
-			
-			
-			overlaytrack.DisplayGraph.displaytracks(baseframe,graph);
-		
-		
+			if( graph!= null){
+			DisplayGraph displaytracks = new DisplayGraph(imp, graph, ndims - 1);
+			displaytracks.getImp();
+		//	displaytracks.displaytracks();
+			}
 		
 	}
 
-	protected static class ImagePlusListener implements SliceListener
-	{
-		@Override
-		public void sliceChanged(ImagePlus arg0)
-		{
-			System.out.println( arg0.getCurrentSlice() );
-		}		
-	}
+	
 
 }

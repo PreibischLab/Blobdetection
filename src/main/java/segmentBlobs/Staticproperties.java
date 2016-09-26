@@ -1,8 +1,6 @@
 package segmentBlobs;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
+
 
 public final class Staticproperties {
 
@@ -14,6 +12,7 @@ public final class Staticproperties {
 		public final double[] location;
 		public final double Intensity;
 		
+		
 		protected Staticproperties(final int Label, final double maxextent, final double Area, final double[] location,
 				final double Intensity) {
 			this.Label = Label;
@@ -23,10 +22,26 @@ public final class Staticproperties {
 			this.Intensity = Intensity;
 
 		}
+		
+		
+		public double squareDistanceTo(Staticproperties target) {
+			// Returns squared distance between the source Blob and the target Blob.
+			
+			final double[] sourceLocation = this.location;
+			final double[] targetLocation = target.location;
+			
+			double distance = 0;
+			
+			for (int d = 0; d < sourceLocation.length; ++d){
+				
+				distance += (sourceLocation[d] - targetLocation[d]) * (sourceLocation[d] - targetLocation[d]);
+			}
+			
+			
+			return distance;
+		}
 
 	
-		
-		
 		
 		
 		

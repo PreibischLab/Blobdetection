@@ -9,6 +9,7 @@ import net.imglib2.algorithm.dog.DifferenceOfGaussian;
 import net.imglib2.algorithm.dog.DogDetection;
 import net.imglib2.algorithm.localextrema.RefinedPeak;
 import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.labeling.NativeImgLabeling;
 import net.imglib2.type.numeric.integer.IntType;
 import net.imglib2.type.numeric.real.FloatType;
@@ -26,14 +27,12 @@ public class Segmentbywatershed {
 		
 		labelledimage = segmentBlobs.Watersheddding.Dowatersheddingonly(blobimage);
 		
-		
-		
-		
+	//	ImageJFunctions.show(labelledimage);
 		return labelledimage;
 	}
 	
 	public static ArrayList<Staticproperties> DoGdetection(final IntervalView<FloatType> blobimage,
-			final RandomAccessibleInterval<IntType> labelledimage, final int minDiameter, final int maxDiameter){
+			final RandomAccessibleInterval<IntType> labelledimage, final int minRadius, final int maxRadius){
 		final int ndims = blobimage.numDimensions();
 		
 		ArrayList<RefinedPeak<Point>> SubpixelMinlist = new ArrayList<RefinedPeak<Point>>(ndims);
@@ -41,7 +40,7 @@ public class Segmentbywatershed {
 		ArrayList<Staticproperties> staticprops = new ArrayList<Staticproperties>(ndims);
 		
 		
-		final Getobjectproperties props = new  Getobjectproperties(blobimage, labelledimage, minDiameter, maxDiameter);
+		final Getobjectproperties props = new  Getobjectproperties(blobimage, labelledimage, minRadius, maxRadius);
 		
 		final int Maxlabel = Watersheddding.GetMaxlabelsseeded(labelledimage);
 		
@@ -54,7 +53,7 @@ public class Segmentbywatershed {
 			 final Objprop objproperties = props.Getobjectprops(label);
 			
 			 
-			final double estimatedDiameter = objproperties.diameter ;
+			final double estimatedDiameter = objproperties.diameter/ 2 ;
 			
 			outimg = Watersheddding.CurrentLabelImage(labelledimage, blobimage, label);
 			
