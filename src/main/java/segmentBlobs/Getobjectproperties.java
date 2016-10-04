@@ -57,7 +57,6 @@ public class Getobjectproperties {
 	// after neglecting the background which carries the label 0
 	public  Objprop Getobjectprops( int currentlabel) {
 
-			double area = 0;
 			double Radius = 0;
 			double totalintensity = 0;
 			

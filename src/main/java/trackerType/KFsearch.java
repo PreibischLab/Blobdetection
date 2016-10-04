@@ -16,6 +16,7 @@ import org.jgrapht.graph.SimpleWeightedGraph;
 
 import blobObjects.FramedBlob;
 import costMatrix.CostFunction;
+import costMatrix.IntensityDiffCostFunction;
 import costMatrix.JaqamanLinkingCostMatrixCreator;
 import costMatrix.SquareDistCostFunction;
 import graphconstructs.JaqamanLinker;
@@ -56,6 +57,13 @@ public class KFsearch implements Blob {
 	public SimpleWeightedGraph< Staticproperties, DefaultWeightedEdge > getResult()
 	{
 		return graph;
+	}
+	
+	
+	public ArrayList<FramedBlob> getFramelist()
+	{
+		
+		return Allpredictions;
 	}
 
 	@Override
@@ -107,8 +115,19 @@ public class KFsearch implements Blob {
 		
 		// Max KF search cost.
 		final double maxCost = maxsearchRadius * maxsearchRadius;
+		
+		
+		
 		// Cost function to nucleate KFs.
+		
+		// Distance based Cost function (uncomment the method if has to be used)
+		
 		final CostFunction< Staticproperties, Staticproperties > nucleatingCostFunction = new SquareDistCostFunction();
+		
+		// Intensity based Cost function (Comment out the method if previous method is being used)
+		final CostFunction< Staticproperties, Staticproperties > nucleatingIntensityCostFunction = new IntensityDiffCostFunction();
+		
+		
 		// Max cost to nucleate KFs.
 		final double maxInitialCost = initialsearchRadius * initialsearchRadius;
 
@@ -120,8 +139,8 @@ public class KFsearch implements Blob {
 		 * search radius, then the fluoctuations over predicted states are
 		 * large.
 		 */
-		final double positionProcessStd = maxsearchRadius / 3d;
-		final double velocityProcessStd = maxsearchRadius / 3d;
+		final double positionProcessStd = maxsearchRadius / 4d;
+		final double velocityProcessStd = maxsearchRadius / 4d;
 		
 		
 		double meanSpotRadius = 0d;
@@ -150,31 +169,30 @@ public class KFsearch implements Blob {
 		// Make the preditiction map
 		final Map< ComparableRealPoint, CVMKalmanFilter > predictionMap = 
 				new HashMap< ComparableRealPoint, CVMKalmanFilter >( kalmanFiltersMap.size() );
+		
 		for ( final CVMKalmanFilter kf : kalmanFiltersMap.keySet() )
 		{
 			final double[] X = kf.predict();
 			final ComparableRealPoint point = new ComparableRealPoint( X );
 			predictionMap.put( point, kf );
 			
-			
-			    final Staticproperties foundBlob = kalmanFiltersMap.get( kf );
-				final Staticproperties prediction = MakeBlob( point, foundBlob );
-				
-				FramedBlob newframedBlob = new FramedBlob(frame, prediction);
-				Allpredictions.add( newframedBlob);
-			
 		}
 		final List< ComparableRealPoint > predictions = new ArrayList< ComparableRealPoint >( predictionMap.keySet() );
-
+		
 		// Orphans are dealt with later
 		final Collection< CVMKalmanFilter > childlessKFs = new HashSet< CVMKalmanFilter >( kalmanFiltersMap.keySet() );
 
 
+		/* Here we simply link based on minimizing the squared distances to get an initial starting point, more advanced
+		 * Kalman filter costs will be built in the next step
+		 */
+		
 					if ( !predictions.isEmpty() && !measurements.isEmpty() )
 					{
 						// Only link measurements to predictions if we have predictions.
 
-						final JaqamanLinkingCostMatrixCreator< ComparableRealPoint, Staticproperties > crm = new JaqamanLinkingCostMatrixCreator< ComparableRealPoint, Staticproperties >( predictions, measurements, CF, maxCost, ALTERNATIVE_COST_FACTOR, PERCENTILE );
+						final JaqamanLinkingCostMatrixCreator< ComparableRealPoint, Staticproperties > crm = new JaqamanLinkingCostMatrixCreator< ComparableRealPoint, Staticproperties >( predictions, measurements, DistanceBasedcost, maxCost, ALTERNATIVE_COST_FACTOR, PERCENTILE );
+						
 						final JaqamanLinker< ComparableRealPoint, Staticproperties > linker = new JaqamanLinker< ComparableRealPoint, Staticproperties >( crm );
 						if ( !linker.checkInput() || !linker.process() )
 						{
@@ -199,7 +217,10 @@ public class KFsearch implements Blob {
 							final DefaultWeightedEdge edge = graph.addEdge( source, target );
 							final double cost = costs.get( cm );
 							graph.setEdgeWeight( edge, cost );
-
+							FramedBlob prevframedBlob = new FramedBlob(frame - 1, source);
+							FramedBlob newframedBlob = new FramedBlob(frame, target);
+							Allpredictions.add( prevframedBlob);
+							Allpredictions.add( newframedBlob);
 							// Update Kalman filter
 							kf.update( MeasureBlob( target ) );
 
@@ -216,14 +237,15 @@ public class KFsearch implements Blob {
 					
 					
 					 // Deal with orphans from the previous frame.
-					 
+					 // Here is the real linking with the actual cost function
 					 
 					if ( !Firstorphan.isEmpty() && !Secondorphan.isEmpty() )
 					{
 						
 						// Trying to link orphans with unlinked candidates.
 
-						final JaqamanLinkingCostMatrixCreator< Staticproperties, Staticproperties > ic = new JaqamanLinkingCostMatrixCreator< Staticproperties, Staticproperties >( Firstorphan, Secondorphan, nucleatingCostFunction, maxInitialCost, ALTERNATIVE_COST_FACTOR, PERCENTILE );
+						final JaqamanLinkingCostMatrixCreator< Staticproperties, Staticproperties > ic = new JaqamanLinkingCostMatrixCreator< Staticproperties, Staticproperties >( Firstorphan, Secondorphan, 
+								nucleatingIntensityCostFunction, maxInitialCost, ALTERNATIVE_COST_FACTOR, PERCENTILE );
 						final JaqamanLinker< Staticproperties, Staticproperties > newLinker = new JaqamanLinker< Staticproperties, Staticproperties >( ic );
 						if ( !newLinker.checkInput() || !newLinker.process() )
 						{
@@ -255,6 +277,10 @@ public class KFsearch implements Blob {
 							final DefaultWeightedEdge edge = graph.addEdge( source, target );
 							final double cost = assignmentCosts.get( source );
 							graph.setEdgeWeight( edge, cost );
+							FramedBlob prevframedBlob = new FramedBlob(frame - 1, source);
+							FramedBlob newframedBlob = new FramedBlob(frame, target);
+							Allpredictions.add( prevframedBlob);
+							Allpredictions.add( newframedBlob);
 						}
 					}
 					Firstorphan = Secondorphan;
@@ -296,7 +322,7 @@ public class KFsearch implements Blob {
 	
 	private static final Staticproperties MakeBlob( final ComparableRealPoint X, Staticproperties foundBlob )
 	{
-		final Staticproperties newBlob = new Staticproperties( foundBlob.maxextent, X, foundBlob.Intensity);
+		final Staticproperties newBlob = new Staticproperties( foundBlob.maxextent, X, foundBlob.Intensity, foundBlob.maxIntensityFrame, foundBlob.minIntensityFrame);
 		return newBlob;
 	}
 
@@ -341,10 +367,15 @@ public class KFsearch implements Blob {
 	}
 	
 	/**
+	 * 
+	 * Implementations of various cost functions, starting with the simplest one, based on
+	 * minimizing the distances between the links, followed by minimizing cost function based on intensity
+	 * differences between the links.
+     *
 	 * Cost function that returns the square distance between a KF state and a
 	 * Blob.
 	 */
-	private static final CostFunction< ComparableRealPoint, Staticproperties > CF = new CostFunction< ComparableRealPoint, Staticproperties >()
+	private static final CostFunction< ComparableRealPoint, Staticproperties > DistanceBasedcost = new CostFunction< ComparableRealPoint, Staticproperties >()
 			{
 
 		@Override
@@ -357,4 +388,6 @@ public class KFsearch implements Blob {
 		}
 			};
 	
+			
+		
 }

@@ -8,6 +8,7 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
 import blobList.Makebloblist;
+import blobObjects.FramedBlob;
 import fiji.tool.SliceListener;
 import fiji.tool.SliceObserver;
 import ij.ImageJ;
@@ -23,6 +24,7 @@ import net.imglib2.type.numeric.integer.IntType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
+import overlaytrack.DisplayBlobs;
 import overlaytrack.DisplayGraph;
 import segmentBlobs.Getobjectproperties;
 import segmentBlobs.Staticproperties;
@@ -37,7 +39,7 @@ public class Trackblobs {
 
 		// Load the stack of images
 		final RandomAccessibleInterval<FloatType> img = util.ImgLib2Util
-				.openAs32Bit(new File("src/main/resources/5framestack.tif"), new ArrayImgFactory<FloatType>());
+				.openAs32Bit(new File("src/main/resources/smallcherry.tif"), new ArrayImgFactory<FloatType>());
 		
 		
 		
@@ -87,23 +89,30 @@ public class Trackblobs {
 */
 			// Create an object for Kalman Filter tracking
 			final int initialSearchradius = 0;
-			final int maxSearchradius = 20;
+			final int maxSearchradius = 100;
 		
-		    KFsearch KFsimple = new KFsearch(Allspots, initialSearchradius, maxSearchradius, (int)img.dimension(ndims - 1), 0);
+		    KFsearch KFsimple = new KFsearch(Allspots, initialSearchradius, maxSearchradius, (int)img.dimension(ndims - 1), 1);
 	        KFsimple.process();
 	        System.out.println("KF search process done");
 		    SimpleWeightedGraph<Staticproperties, DefaultWeightedEdge> graph = KFsimple.getResult();
-		    
+		    ArrayList<FramedBlob> frameandblob = KFsimple.getFramelist();
 		    
 		    
 		    
 		    // Overlay the track on the stack
-		    
+		/*    
 			if( graph!= null){
 			DisplayGraph displaytracks = new DisplayGraph(imp, graph, ndims - 1);
 			displaytracks.getImp();
 			}
-		
+			
+		*/	
+			RandomAccessibleInterval<FloatType> detimg = new ArrayImgFactory<FloatType>().create(img,
+					new FloatType());
+			
+			if (frameandblob.size() > 0)
+			DisplayBlobs.Displaydetection(detimg, frameandblob);
+			ImageJFunctions.show(detimg);
 	}
 
 	

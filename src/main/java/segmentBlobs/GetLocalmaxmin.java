@@ -480,6 +480,29 @@ import ij.ImageJ;
 			
 			return maxVal;
 		}
+		
+		public static double computeMinIntensity(final RandomAccessibleInterval<FloatType> inputimg) {
+			// create a cursor for the image (the order does not matter)
+			final Cursor<FloatType> cursor = Views.iterable(inputimg).cursor();
+
+			// initialize min and max with the first image value
+			double minVal =  Double.MAX_VALUE;
+
+			// loop over the rest of the data and determine min and max value
+			while (cursor.hasNext()) {
+				// we need this type more than once
+				cursor.fwd();
+
+				
+
+				if (cursor.get().get() < minVal) {
+					minVal = cursor.get().getRealDouble();
+
+				}
+			}
+			
+			return minVal;
+		}
 
 		public static double computeMaxIntensityinlabel(final RandomAccessibleInterval<FloatType> inputimg, 
 				final RandomAccessibleInterval<IntType> intimg, final int label ) {

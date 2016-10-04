@@ -3,12 +3,13 @@ package costMatrix;
 import segmentBlobs.Staticproperties;
 
 /**
- * A cost function that returns cost equal to the square distance. Suited to
- * Brownian motion.
+ * Implementation of various cost functions
  * 
- * @author Jean-Yves Tinevez - 2014
  * 
  */
+
+// Cost function base don minimizing the squared distances
+
 public class SquareDistCostFunction implements CostFunction< Staticproperties, Staticproperties >
 {
 
@@ -17,5 +18,9 @@ public class SquareDistCostFunction implements CostFunction< Staticproperties, S
 	{
 		return source.squareDistanceTo(target );
 	}
+	
+	
+	
+	
 
 }

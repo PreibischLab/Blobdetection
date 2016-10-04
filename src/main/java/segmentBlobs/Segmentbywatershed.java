@@ -60,7 +60,7 @@ public class Segmentbywatershed {
 			
 			final FinalInterval range = new FinalInterval(outimg.dimension(0), outimg.dimension(1));
 			double sigma1 = 1.0/(1+ Math.sqrt(2)) * estimatedDiameter;
-			double sigma2 = Math.sqrt(2) * sigma1;
+			double sigma2 = Math.sqrt(1.2) * sigma1;
 			
 			DogDetection<FloatType> newdog = new DogDetection<FloatType>(Views.extendMirrorSingle(outimg), range,
 					new double[] { 1, 1 }, sigma1, sigma2,
@@ -70,11 +70,12 @@ public class Segmentbywatershed {
 			// Detect minima in Scale space
 			SubpixelMinlist = newdog.getSubpixelPeaks();
 			
+			
             for (int index = 0; index < SubpixelMinlist.size(); ++index ){
 			
 					final Staticproperties statprops = new Staticproperties(objproperties.Label, objproperties.diameter, 
 					new double[] {SubpixelMinlist.get(index).getDoublePosition(0),
-							SubpixelMinlist.get(index).getDoublePosition(1)}, objproperties.totalintensity);
+							SubpixelMinlist.get(index).getDoublePosition(1)}, objproperties.totalintensity, GetLocalmaxmin.computeMaxIntensity(blobimage), GetLocalmaxmin.computeMinIntensity(blobimage));
 					
 						
 					//System.out.println(label + " " + estimatedDiameter  );

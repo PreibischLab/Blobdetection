@@ -7,8 +7,8 @@ import segmentBlobs.Staticproperties;
 public class FramedBlob {
 
 	
-	private final int frame;
-	private  Staticproperties Blobs;
+	public final int frame;
+	public  Staticproperties Blobs;
 	
 	
 	public FramedBlob( final int frame, Staticproperties Blobs ){

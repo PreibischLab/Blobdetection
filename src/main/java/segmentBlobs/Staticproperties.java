@@ -10,6 +10,8 @@ public final class Staticproperties  implements RealLocalizable, Comparable< Sta
 		public  double maxextent;
 		public  double[] location;
 		public  double Intensity;
+		public double maxIntensityFrame;
+		public double minIntensityFrame;
 		/*
 		 * CONSTRUCTORS
 		 */
@@ -28,10 +30,12 @@ public final class Staticproperties  implements RealLocalizable, Comparable< Sta
 		 */
 		
 		public Staticproperties(final int Label, final double maxextent, final double[] location,
-				final double Intensity) {
+				final double Intensity, final double maxIntensityFrame, final double minIntensityFrame) {
 			this.maxextent = maxextent;
 			this.location = location;
 			this.Intensity = Intensity;
+			this.maxIntensityFrame = maxIntensityFrame;
+			this.minIntensityFrame = minIntensityFrame;
 
 		}
 		
@@ -48,11 +52,13 @@ public final class Staticproperties  implements RealLocalizable, Comparable< Sta
 		 */
 		
 		public Staticproperties(final double maxextent, final double[] location,
-				final double Intensity) {
+				final double Intensity, final double maxIntensityFrame, final double minIntensityFrame) {
 			
 			this.maxextent = maxextent;
 			this.location = location;
 			this.Intensity = Intensity;
+			this.maxIntensityFrame = maxIntensityFrame;
+			this.minIntensityFrame = minIntensityFrame;
 
 		}
 		
@@ -68,9 +74,9 @@ public final class Staticproperties  implements RealLocalizable, Comparable< Sta
 		 */
 		
 		public Staticproperties(final double maxextent, final RealLocalizable location,
-				final double Intensity) {
+				final double Intensity, final double maxIntensityFrame, final double minIntensityFrame) {
 			
-			this(maxextent, new double [] {location.getDoublePosition(0) , location.getDoublePosition(1)}, Intensity);
+			this(maxextent, new double [] {location.getDoublePosition(0) , location.getDoublePosition(1)}, Intensity, maxIntensityFrame, minIntensityFrame);
 			
 			
 
@@ -106,6 +112,35 @@ public final class Staticproperties  implements RealLocalizable, Comparable< Sta
 			
 			return distance;
 		}
+		
+		
+		/**
+		 * Returns the Intnesity weighted squared distance between two blobs.
+		 *
+		 * @param target
+		 *            the Blob to compare to.
+		 *
+		 * @return the Intensity weighted distance to the current blob to target blob specified.
+		 */
+		
+		public double IntensityweightedsquareDistanceTo(Staticproperties target) {
+			// Returns squared distance between the source Blob and the target Blob.
+			
+			final double[] sourceLocation = location;
+			final double[] targetLocation = target.location;
+			
+			double distance = 0;
+			
+			for (int d = 0; d < sourceLocation.length; ++d){
+				
+				distance += (sourceLocation[d] * Intensity - targetLocation[d] * target.Intensity) * (sourceLocation[d] * Intensity - targetLocation[d] * target.Intensity);
+			}
+			
+			
+			return distance;
+		}
+		
+		
 
 	
 		/**
@@ -186,7 +221,7 @@ public final class Staticproperties  implements RealLocalizable, Comparable< Sta
 
 		@Override
 		public int numDimensions() {
-			// TODO Auto-generated method stub
+			
 			return location.length;
 		}
 		
