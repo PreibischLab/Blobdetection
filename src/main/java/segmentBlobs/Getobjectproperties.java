@@ -6,6 +6,7 @@ import java.util.Iterator;
 
 import com.sun.tools.javac.util.Pair;
 
+import blobObjects.Objprop;
 import ij.ImageJ;
 import net.imglib2.Cursor;
 import net.imglib2.Localizable;
@@ -67,12 +68,11 @@ public class Getobjectproperties {
 						Pair<Integer, Double> pair = EstimatedRadius(pos, minRadius, maxRadius);
 						Radius = pair.fst;
 						totalintensity = pair.snd;
-						area = Math.PI * Radius * Radius ;
 			
 			
 			// Store all object properties in the java object and arraylist of
 			// that object
-			final Objprop props = new Objprop(currentlabel, 2 * Radius , area, totalintensity);
+			final Objprop props = new Objprop(currentlabel, 2 * Radius , totalintensity);
 			
 
 			return props;

@@ -2,15 +2,13 @@ package segmentBlobs;
 
 import java.util.ArrayList;
 
+import blobObjects.Objprop;
 import net.imglib2.FinalInterval;
 import net.imglib2.Point;
 import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.algorithm.dog.DifferenceOfGaussian;
 import net.imglib2.algorithm.dog.DogDetection;
 import net.imglib2.algorithm.localextrema.RefinedPeak;
 import net.imglib2.img.array.ArrayImgFactory;
-import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.labeling.NativeImgLabeling;
 import net.imglib2.type.numeric.integer.IntType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.IntervalView;
@@ -53,7 +51,7 @@ public class Segmentbywatershed {
 			 final Objprop objproperties = props.Getobjectprops(label);
 			
 			 
-			final double estimatedDiameter = objproperties.diameter/ 2 ;
+			final double estimatedDiameter = objproperties.diameter ;
 			
 			outimg = Watersheddding.CurrentLabelImage(labelledimage, blobimage, label);
 			
@@ -61,10 +59,11 @@ public class Segmentbywatershed {
 			final Float val = GlobalThresholding.AutomaticThresholding(outimg);
 			
 			final FinalInterval range = new FinalInterval(outimg.dimension(0), outimg.dimension(1));
-			
+			double sigma1 = 1.0/(1+ Math.sqrt(2)) * estimatedDiameter;
+			double sigma2 = Math.sqrt(2) * sigma1;
 			
 			DogDetection<FloatType> newdog = new DogDetection<FloatType>(Views.extendMirrorSingle(outimg), range,
-					new double[] { 1, 1 }, estimatedDiameter, estimatedDiameter + 0.1,
+					new double[] { 1, 1 }, sigma1, sigma2,
 					DogDetection.ExtremaType.MINIMA,
 					 val, true);
 			
@@ -73,7 +72,7 @@ public class Segmentbywatershed {
 			
             for (int index = 0; index < SubpixelMinlist.size(); ++index ){
 			
-					final Staticproperties statprops = new Staticproperties(objproperties.Label, objproperties.diameter, objproperties.Area,
+					final Staticproperties statprops = new Staticproperties(objproperties.Label, objproperties.diameter, 
 					new double[] {SubpixelMinlist.get(index).getDoublePosition(0),
 							SubpixelMinlist.get(index).getDoublePosition(1)}, objproperties.totalintensity);
 					

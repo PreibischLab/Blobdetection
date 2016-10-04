@@ -47,9 +47,9 @@ public class CVMKalmanFilter {
 	 * 
 	 * 
 	 * @param X0
-	 *            initial state estimate. Must a 6 elements
+	 *            initial state estimate. Must be a 4 elements
 	 *            <code>double[]</code> array with
-	 *            <code>x0, y0, z0, vx0, vy0, vz0</code> with velocity in
+	 *            <code>x0, y0,vx0, vy0</code> with velocity in
 	 *            <code>length/frame</code> units.
 	 * @param initStateCovariance
 	 *            the initial state covariance. Give it a large value if you do
@@ -72,38 +72,38 @@ public class CVMKalmanFilter {
 	public CVMKalmanFilter( final double[] X0, final double initStateCovariance, final double positionProcessStd, final double velocityProcessStd, final double positionMeasurementStd )
 	{
 		// Initial state
-		X = new Matrix( X0, 6 );
+		X = new Matrix( X0, 4 );
 
 		// Evolution matrix
-		A = Matrix.identity( 6, 6 );
-		for ( int i = 0; i < 3; i++ )
+		A = Matrix.identity( 4, 4 );
+		for ( int i = 0; i < 2; i++ )
 		{
-			A.set( i, 3 + i, 1 );
+			A.set( i, 2 + i, 1 );
 		}
 
 		// Measurement matrix
-		H = Matrix.identity( 3, 6 );
+		H = Matrix.identity( 2, 4 );
 
 		// State covariance
-		P = Matrix.identity( 6, 6 ).times( initStateCovariance );
+		P = Matrix.identity( 4, 4 ).times( initStateCovariance );
 
 		// Process covariance
-		Q = Matrix.identity( 6, 6 );
-		for ( int i = 0; i < 3; i++ )
+		Q = Matrix.identity( 4, 4 );
+		for ( int i = 0; i < 2; i++ )
 		{
 			Q.set( i, i, positionProcessStd * positionProcessStd );
-			Q.set( 3 + i, 3 + i, velocityProcessStd * velocityProcessStd );
+			Q.set( 2 + i, 2 + i, velocityProcessStd * velocityProcessStd );
 		}
 
-		R = Matrix.identity( 3, 3 ).times( positionMeasurementStd * positionMeasurementStd );
+		R = Matrix.identity( 2, 2 ).times( positionMeasurementStd * positionMeasurementStd );
 	}
 
 	/**
 	 * Runs the prediction step of the Kalman filter and returns the state
 	 * predicted by the evolution process.
 	 * 
-	 * @return a new <code>double[]</code> of 6 elements containing the
-	 *         predicted state: <code>x, y, z, vx, vy, vz</code> with velocity
+	 * @return a new <code>double[]</code> of 4 elements containing the
+	 *         predicted state: <code>x, y, vx, vy</code> with velocity
 	 *         in <code>length/frame</code> units.
 	 * 
 	 */
@@ -119,9 +119,9 @@ public class CVMKalmanFilter {
 	 * measurement.
 	 * 
 	 * @param Xm
-	 *            the measured position, must be specified as a 3 elements
+	 *            the measured position, must be specified as a 2 elements
 	 *            <code>double[]</code>array, containing the measured
-	 *            <code>x, y, z</code> position. It can be <code>null</code>;
+	 *            <code>x, y</code> position. It can be <code>null</code>;
 	 *            the filter then assumes an occlusion occurred, and update its
 	 *            state based on solely the prediction step.
 	 */
@@ -135,13 +135,13 @@ public class CVMKalmanFilter {
 		}
 		else
 		{
-			final Matrix XM = new Matrix( Xm, 3 );
+			final Matrix XM = new Matrix( Xm, 2 );
 			final Matrix TEMP = H.times( P.times( H.transpose() ) ).plus( R );
 			final Matrix K = P.times( H.transpose() ).times( TEMP.inverse() );
 			// State
 			X = Xp.plus( K.times( XM.minus( H.times( Xp ) ) ) );
 			// Covariance
-			P = ( Matrix.identity( 6, 6 ).minus( K.times( H ) ) ).times( P );
+			P = ( Matrix.identity( 4, 4 ).minus( K.times( H ) ) ).times( P );
 		}
 	}
 
@@ -153,7 +153,7 @@ public class CVMKalmanFilter {
 	 */
 	public double getPositionError()
 	{
-		return Math.sqrt( ( P.get( 0, 0 ) + P.get( 1, 1 ) + P.get( 2, 2 ) ) / 3d );
+		return Math.sqrt( ( P.get( 0, 0 ) + P.get( 1, 1 )) / 2d );
 	}
 
 	/**
@@ -165,7 +165,7 @@ public class CVMKalmanFilter {
 	 */
 	public double getVelocityError()
 	{
-		return Math.sqrt( ( P.get( 3, 3 ) + P.get( 4, 4 ) + P.get( 5, 5 ) ) / 3d );
+		return Math.sqrt( ( P.get( 2, 2 ) + P.get( 3, 3 )) / 2d );
 	}
 
 

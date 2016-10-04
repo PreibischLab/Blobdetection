@@ -106,7 +106,6 @@ public class NNsearch implements Blob {
 			
 			final NNFlagsearchKDtree<Staticproperties> Search = new NNFlagsearchKDtree<Staticproperties>(Tree);
 			
-			System.out.println(" Making KD Tree for NN search: ");
 			
 			
 			while(baseobjectiterator.hasNext()){

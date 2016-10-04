@@ -26,6 +26,7 @@ import net.imglib2.view.Views;
 import overlaytrack.DisplayGraph;
 import segmentBlobs.Getobjectproperties;
 import segmentBlobs.Staticproperties;
+import trackerType.KFsearch;
 import trackerType.NNsearch;
 
 public class Trackblobs {
@@ -36,7 +37,7 @@ public class Trackblobs {
 
 		// Load the stack of images
 		final RandomAccessibleInterval<FloatType> img = util.ImgLib2Util
-				.openAs32Bit(new File("src/main/resources/15framenoisyblobs.tif"), new ArrayImgFactory<FloatType>());
+				.openAs32Bit(new File("src/main/resources/5framestack.tif"), new ArrayImgFactory<FloatType>());
 		
 		
 		
@@ -74,16 +75,33 @@ public class Trackblobs {
 			System.out.println("Finding blobs in Frame: " + i);
 		}
 		
+		
+		
+		// Either perform Nearest Neighbour tracking or Kalman Filter tracking
+/*		
 			// Create an object for NN search
 			NNsearch  NNsearchsimple = new NNsearch(Allspots, maxsqdistance, img.dimension(ndims - 1)  );
-			
 			NNsearchsimple.process();
-			
 			SimpleWeightedGraph<Staticproperties, DefaultWeightedEdge> graph = NNsearchsimple.getResult();
+			System.out.println("NN search process done");
+*/
+			// Create an object for Kalman Filter tracking
+			final int initialSearchradius = 0;
+			final int maxSearchradius = 20;
+		
+		    KFsearch KFsimple = new KFsearch(Allspots, initialSearchradius, maxSearchradius, (int)img.dimension(ndims - 1), 0);
+	        KFsimple.process();
+	        System.out.println("KF search process done");
+		    SimpleWeightedGraph<Staticproperties, DefaultWeightedEdge> graph = KFsimple.getResult();
+		    
+		    
+		    
+		    
+		    // Overlay the track on the stack
+		    
 			if( graph!= null){
 			DisplayGraph displaytracks = new DisplayGraph(imp, graph, ndims - 1);
 			displaytracks.getImp();
-		//	displaytracks.displaytracks();
 			}
 		
 	}
