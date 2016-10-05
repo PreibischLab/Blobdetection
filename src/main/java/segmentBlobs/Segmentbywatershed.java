@@ -19,18 +19,18 @@ public class Segmentbywatershed {
 	
 	
 	
-	public static RandomAccessibleInterval<IntType> getsegmentedimage(final RandomAccessibleInterval<FloatType> blobimage){
+	public static RandomAccessibleInterval<IntType> getsegmentedimage(final RandomAccessibleInterval<FloatType> blobimage, boolean softThreshold){
 		
 		RandomAccessibleInterval<IntType> labelledimage = new ArrayImgFactory<IntType>().create(blobimage, new IntType());
 		
-		labelledimage = segmentBlobs.Watersheddding.Dowatersheddingonly(blobimage);
+		labelledimage = segmentBlobs.Watersheddding.Dowatersheddingonly(blobimage, softThreshold);
 		
 	//	ImageJFunctions.show(labelledimage);
 		return labelledimage;
 	}
 	
 	public static ArrayList<Staticproperties> DoGdetection(final IntervalView<FloatType> blobimage,
-			final RandomAccessibleInterval<IntType> labelledimage, final int minRadius, final int maxRadius){
+			final RandomAccessibleInterval<IntType> labelledimage, final int minRadius, final int maxRadius, final double[] calibration, int framenumber, boolean softThreshold){
 		final int ndims = blobimage.numDimensions();
 		
 		ArrayList<RefinedPeak<Point>> SubpixelMinlist = new ArrayList<RefinedPeak<Point>>(ndims);
@@ -56,16 +56,19 @@ public class Segmentbywatershed {
 			outimg = Watersheddding.CurrentLabelImage(labelledimage, blobimage, label);
 			
 			// Determine local threshold value for each label
-			final Float val = GlobalThresholding.AutomaticThresholding(outimg);
+			Float val =  GlobalThresholding.AutomaticThresholding(outimg);
+			Float threshold = new Float(val);
+			if (softThreshold)
+				threshold = new Float (0.5 * val);
 			
 			final FinalInterval range = new FinalInterval(outimg.dimension(0), outimg.dimension(1));
-			double sigma1 = 1.0/(1+ Math.sqrt(2)) * estimatedDiameter;
-			double sigma2 = Math.sqrt(1.2) * sigma1;
+			double sigma1 = 0.9 * estimatedDiameter / 2;
+			double sigma2 = sigma1  + 0.2;
 			
 			DogDetection<FloatType> newdog = new DogDetection<FloatType>(Views.extendMirrorSingle(outimg), range,
-					new double[] { 1, 1 }, sigma1, sigma2,
+					new double[] { calibration[0], calibration[1] }, sigma1, sigma2,
 					DogDetection.ExtremaType.MINIMA,
-					 val, true);
+					threshold, true);
 			
 			// Detect minima in Scale space
 			SubpixelMinlist = newdog.getSubpixelPeaks();
@@ -73,7 +76,7 @@ public class Segmentbywatershed {
 			
             for (int index = 0; index < SubpixelMinlist.size(); ++index ){
 			
-					final Staticproperties statprops = new Staticproperties(objproperties.Label, objproperties.diameter, 
+					final Staticproperties statprops = new Staticproperties(objproperties.Label, framenumber, objproperties.diameter, 
 					new double[] {SubpixelMinlist.get(index).getDoublePosition(0),
 							SubpixelMinlist.get(index).getDoublePosition(1)}, objproperties.totalintensity, GetLocalmaxmin.computeMaxIntensity(blobimage), GetLocalmaxmin.computeMinIntensity(blobimage));
 					

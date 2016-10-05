@@ -8,6 +8,7 @@ public final class Staticproperties  implements RealLocalizable, Comparable< Sta
 	
 
 		public  double maxextent;
+		public int currentframe;
 		public  double[] location;
 		public  double Intensity;
 		public double maxIntensityFrame;
@@ -29,8 +30,9 @@ public final class Staticproperties  implements RealLocalizable, Comparable< Sta
 		 *            Intensity of the Blob in image units
 		 */
 		
-		public Staticproperties(final int Label, final double maxextent, final double[] location,
+		public Staticproperties(final int Label, final int currentframe, final double maxextent, final double[] location,
 				final double Intensity, final double maxIntensityFrame, final double minIntensityFrame) {
+			this.currentframe = currentframe;
 			this.maxextent = maxextent;
 			this.location = location;
 			this.Intensity = Intensity;
@@ -51,9 +53,9 @@ public final class Staticproperties  implements RealLocalizable, Comparable< Sta
 		 *            Intensity of the Blob in image units
 		 */
 		
-		public Staticproperties(final double maxextent, final double[] location,
+		public Staticproperties(final int currentframe, final double maxextent, final double[] location,
 				final double Intensity, final double maxIntensityFrame, final double minIntensityFrame) {
-			
+			this.currentframe = currentframe;
 			this.maxextent = maxextent;
 			this.location = location;
 			this.Intensity = Intensity;
@@ -73,10 +75,10 @@ public final class Staticproperties  implements RealLocalizable, Comparable< Sta
 		 *            Intensity of the Blob in image units
 		 */
 		
-		public Staticproperties(final double maxextent, final RealLocalizable location,
+		public Staticproperties(final int currentframe, final double maxextent, final RealLocalizable location,
 				final double Intensity, final double maxIntensityFrame, final double minIntensityFrame) {
 			
-			this(maxextent, new double [] {location.getDoublePosition(0) , location.getDoublePosition(1)}, Intensity, maxIntensityFrame, minIntensityFrame);
+			this(currentframe, maxextent, new double [] {location.getDoublePosition(0) , location.getDoublePosition(1)}, Intensity, maxIntensityFrame, minIntensityFrame);
 			
 			
 
@@ -129,15 +131,15 @@ public final class Staticproperties  implements RealLocalizable, Comparable< Sta
 			final double[] sourceLocation = location;
 			final double[] targetLocation = target.location;
 			
-			double distance = 0;
+			double IntensityweightedDistance = 0;
 			
 			for (int d = 0; d < sourceLocation.length; ++d){
 				
-				distance += (sourceLocation[d] * Intensity - targetLocation[d] * target.Intensity) * (sourceLocation[d] * Intensity - targetLocation[d] * target.Intensity);
+				IntensityweightedDistance += (sourceLocation[d]  - targetLocation[d])  * (sourceLocation[d]  - targetLocation[d] );
 			}
 			
 			
-			return distance;
+			return IntensityweightedDistance;
 		}
 		
 		

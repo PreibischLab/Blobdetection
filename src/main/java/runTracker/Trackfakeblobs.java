@@ -8,10 +8,12 @@ import net.imglib2.FinalInterval;
 import net.imglib2.Point;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.localextrema.RefinedPeak;
+import net.imglib2.algorithm.stats.Normalize;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.integer.IntType;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.view.Views;
 import poissonSimulator.Poissonprocess;
 
 public class Trackfakeblobs {
@@ -39,11 +41,17 @@ public class Trackfakeblobs {
 			
 		RandomAccessibleInterval<FloatType> blobimage = new ArrayImgFactory<FloatType>().create(range, new FloatType());
 		RandomAccessibleInterval<FloatType> noisyblobs = new ArrayImgFactory<FloatType>().create(range, new FloatType());
-		Addnoise.SaltandPepperNoise(blobimage);
+		
 		
 		fakeblobs.Makespots.Createspots(blobimage, sigma, frame * 10, range, numblobs);
-	
-		noisyblobs = Poissonprocess.poissonProcess(blobimage, 35);
+		FloatType minval = new FloatType(0);
+		FloatType maxval = new FloatType(1);
+		Normalize.normalize(Views.iterable(blobimage), minval, maxval);
+		
+		preProcessingTools.Kernels.addBackground(Views.iterable(blobimage), 0.2);
+		
+		
+		noisyblobs = Poissonprocess.poissonProcess(blobimage, 15);
 		
 		ImageJFunctions.show(noisyblobs);
 		

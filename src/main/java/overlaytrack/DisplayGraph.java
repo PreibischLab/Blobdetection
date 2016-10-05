@@ -2,6 +2,8 @@ package overlaytrack;
 
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Set;
 
 import org.jgrapht.WeightedGraph;
 import org.jgrapht.alg.NeighborIndex;
@@ -75,8 +77,11 @@ public class DisplayGraph {
 		        	
 		        }
 		        
+		        
 		      
 		        
+		       
+		       
 		        Line newline = new Line(startedge[0], startedge[1], targetedge[0], targetedge[1]);
 				newline.setStrokeColor(Color.GREEN);
 				newline.setStrokeWidth(graph.degreeOf(Spottarget));

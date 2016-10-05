@@ -14,18 +14,18 @@ public class Makebloblist {
 
 	
 	public static ArrayList<Staticproperties> returnBloblist(final IntervalView<FloatType> baseframe, 
-			final int minDiameter, final int maxDiameter){
+			RandomAccessibleInterval<FloatType> preinputimg, final int minDiameter, final int maxDiameter, final double[] calibration, int framenumber,  final boolean softThreshold){
 		
 		RandomAccessibleInterval<IntType> labelledimagebase = new ArrayImgFactory<IntType>().create(baseframe,
 				new IntType());
 
 	
 		// Segmenting the image via watershed
-		labelledimagebase = segmentBlobs.Segmentbywatershed.getsegmentedimage(baseframe);
+		labelledimagebase = segmentBlobs.Segmentbywatershed.getsegmentedimage(preinputimg, softThreshold);
 		
 		// List containing all the maximas in baseframe
 		ArrayList<Staticproperties> Spotmaxbase = segmentBlobs.Segmentbywatershed.DoGdetection(baseframe,
-				labelledimagebase, minDiameter, maxDiameter);
+				labelledimagebase, minDiameter, maxDiameter, calibration, framenumber, softThreshold);
 		
 		
 		return Spotmaxbase;

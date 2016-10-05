@@ -14,6 +14,7 @@ import net.imglib2.algorithm.labeling.AllConnectedComponents;
 import net.imglib2.algorithm.labeling.Watershed;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.labeling.DefaultROIStrategyFactory;
 import net.imglib2.labeling.Labeling;
 import net.imglib2.labeling.LabelingROIStrategy;
@@ -35,19 +36,22 @@ public class Watersheddding {
 	
 	
 	public static RandomAccessibleInterval<IntType> Dowatersheddingonly(
-			final RandomAccessibleInterval<FloatType> biginputimg) {
+			final RandomAccessibleInterval<FloatType> biginputimg, final boolean softThreshold) {
 
-		// Prepare seed image for watershedding
-		NativeImgLabeling<Integer, IntType> oldseedLabeling = new NativeImgLabeling<Integer, IntType>(
-				new ArrayImgFactory<IntType>().create(biginputimg, new IntType()));
-
-		oldseedLabeling = PrepareSeedImage(biginputimg);
+	
 
 		// Perform the distance transform
 		final Img<FloatType> distimg = new ArrayImgFactory<FloatType>().create(biginputimg, new FloatType());
 
-		DistanceTransformImage(biginputimg, distimg, InverseType.Straight);
+		RandomAccessibleInterval<BitType> bitimg = DistanceTransformImage(biginputimg, distimg, InverseType.Straight, softThreshold);
 
+		
+		// Prepare seed image for watershedding
+		NativeImgLabeling<Integer, IntType> oldseedLabeling = new NativeImgLabeling<Integer, IntType>(
+				new ArrayImgFactory<IntType>().create(biginputimg, new IntType()));
+
+		oldseedLabeling = PrepareSeedImage(biginputimg, bitimg);
+		
 		// Do watershedding on the distance transformed image
 
 		NativeImgLabeling<Integer, IntType> outputLabeling = new NativeImgLabeling<Integer, IntType>(
@@ -55,11 +59,12 @@ public class Watersheddding {
 
 		outputLabeling = GetlabeledImage(distimg, oldseedLabeling);
 
+		
 		return outputLabeling.getStorageImg();
 	}
 
-	public static void DistanceTransformImage(RandomAccessibleInterval<FloatType> inputimg,
-			RandomAccessibleInterval<FloatType> outimg, final InverseType invtype) {
+	public static RandomAccessibleInterval<BitType> DistanceTransformImage(RandomAccessibleInterval<FloatType> inputimg,
+			RandomAccessibleInterval<FloatType> outimg, final InverseType invtype, final boolean softThreshold) {
 		int n = inputimg.numDimensions();
 
 		final Img<BitType> bitimg = new ArrayImgFactory<BitType>().create(inputimg, new BitType());
@@ -69,6 +74,8 @@ public class Watersheddding {
 		final Float threshold = GlobalThresholding.AutomaticThresholding(inputimg);
 		
 		Float val = new Float(threshold);
+		
+		
 		
 		System.out.println("Threshold Value for dist transform: "+ val);
 		GetLocalmaxmin.ThresholdingBit(inputimg, bitimg, val);
@@ -125,14 +132,10 @@ public class Watersheddding {
 				ranac.get().setZero();
 			}
 		}
-
+return bitimg;
 	}
-	public static NativeImgLabeling<Integer, IntType> PrepareSeedImage(RandomAccessibleInterval<FloatType> inputimg) {
+	public static NativeImgLabeling<Integer, IntType> PrepareSeedImage(RandomAccessibleInterval<FloatType> inputimg, RandomAccessibleInterval<BitType> maximgBit ) {
 
-		// Preparing the seed image
-		RandomAccessibleInterval<BitType> maximgBit = new ArrayImgFactory<BitType>().create(inputimg, new BitType());
-		final Float threshold = GlobalThresholding.AutomaticThresholding(inputimg);
-		GetLocalmaxmin.ThresholdingBit(inputimg, maximgBit, threshold);
 
 	
 		// Old Labeling type
