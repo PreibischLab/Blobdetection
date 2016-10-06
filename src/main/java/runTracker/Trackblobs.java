@@ -2,6 +2,8 @@ package runTracker;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
@@ -30,10 +32,10 @@ public class Trackblobs {
 
 		// Load the stack of images
 		final RandomAccessibleInterval<FloatType> img = util.ImgLib2Util
-				.openAs32Bit(new File("src/main/resources/C1-test.tif"), new ArrayImgFactory<FloatType>());
+				.openAs32Bit(new File("../res/15stackimage.tif"), new ArrayImgFactory<FloatType>());
 		
 		final RandomAccessibleInterval<FloatType> preprocessedimg = util.ImgLib2Util
-				.openAs32Bit(new File("src/main/resources/C1-test-pre.tif"), new ArrayImgFactory<FloatType>());
+				.openAs32Bit(new File("../res/15stackimage-pre.tif"), new ArrayImgFactory<FloatType>());
 		
 		
 		int ndims = img.numDimensions();
@@ -45,10 +47,10 @@ public class Trackblobs {
 		Normalize.normalize(Views.iterable(preprocessedimg), minval, maxval);
 		ImagePlus imp = ImageJFunctions.show(img);
 		
-		final boolean softThreshold = true;
+		final boolean softThreshold = false;
 		// Noisye: 15stackimage.tif
 		// Highly Noisy: 15HighNoisyblobs.tif
-		// src/main/resources/C1-test-pre.tif
+		// ../res/C1-test-pre.tif
 		// Actual data
 		// /Users/varunkapoor/Documents/Pierre_data/Latest_video/mCherry_ShortET-brightnessadjust.tif
 		// /Users/varunkapoor/Documents/Pierre_data/Latest_video/mCherry_ShortET.tif
@@ -56,7 +58,7 @@ public class Trackblobs {
 		//ImageJFunctions.show(img);
 		
 		final int minDiameter = 5;
-		final int maxDiameter = 40;
+		final int maxDiameter = 50;
 		final double[] calibration = {imp.getCalibration().pixelWidth, imp.getCalibration().pixelHeight, imp.getCalibration().pixelDepth};
 		final int maxframe = (int)img.dimension(ndims - 1) ;
 		ArrayList<ArrayList<Staticproperties>> Allspots = new ArrayList<ArrayList<Staticproperties>>();
@@ -64,12 +66,10 @@ public class Trackblobs {
 		
 		for (int i = 0; i < maxframe ; ++i) {
 			IntervalView<FloatType> currentframe = Views.hyperSlice(img, ndims - 1, i);
-			IntervalView<FloatType> currentframepreprocessed = Views.hyperSlice(preprocessedimg, ndims - 1, i);
+			IntervalView<FloatType> currentframepre = Views.hyperSlice(preprocessedimg, ndims - 1, i);
 			
-			RandomAccessibleInterval<FloatType> preinputimg = new ArrayImgFactory<FloatType>().create(currentframe,
-					new FloatType());
-			preinputimg = preProcessingTools.Kernels.Meanfilterandsupress(currentframepreprocessed, 2.0);
-			ArrayList<Staticproperties> Spotmaxbase =  Makebloblist.returnBloblist(currentframe,preinputimg, minDiameter, maxDiameter, calibration, i , softThreshold);
+		
+			ArrayList<Staticproperties> Spotmaxbase =  Makebloblist.returnBloblist(currentframe,currentframepre, minDiameter, maxDiameter, calibration, i , softThreshold);
 			Allspots.add( i, Spotmaxbase );
 			System.out.println("Finding blobs in Frame: " + i);
 			System.out.println("Total number of Blobs found: " + Spotmaxbase.size());
@@ -87,34 +87,34 @@ public class Trackblobs {
 			System.out.println("NN search process done");
 */
 			// Create an object for Kalman Filter tracking
-			final int initialSearchradius = 0;
-			final int maxSearchradius = 30;
-			final int missedframes = maxframe / 10;
+			final int initialSearchradius = 50;
+			final int maxSearchradius = 20;
+			final int missedframes = 3;
 		
 		    KFsearch KFsimple = new KFsearch(Allspots, initialSearchradius, maxSearchradius, (int)img.dimension(ndims - 1), missedframes);
 	        KFsimple.process();
 	        System.out.println("KF search process done");
 		    SimpleWeightedGraph<Staticproperties, DefaultWeightedEdge> graph = KFsimple.getResult();
+
 		    ArrayList<FramedBlob> frameandblob = KFsimple.getFramelist();
 		    
 		    
 		    // Overlay the track on the stack
-	   	/*   
+	   	 
 			if( graph!= null){
 			DisplayGraph displaytracks = new DisplayGraph(imp, graph, ndims - 1);
 			displaytracks.getImp();
 			}
 			
-		*/
+		
 			RandomAccessibleInterval<FloatType> detimg = new ArrayImgFactory<FloatType>().create(img,
 					new FloatType());
-			
-			if (frameandblob.size() > 0)
+			RandomAccessibleInterval<FloatType> detimgsec = new ArrayImgFactory<FloatType>().create(img,
+					new FloatType());
 			DisplayBlobs.Displaydetection(detimg, frameandblob);
+			
+			
 			Normalize.normalize(Views.iterable(detimg), minval, maxval);
 			ImageJFunctions.show(detimg);
 	}
-
-	
-
 }

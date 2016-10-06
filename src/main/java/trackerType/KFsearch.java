@@ -32,14 +32,18 @@ public class KFsearch implements Blob {
 	private static final String BASE_ERROR_MSG = "[KalmanTracker] ";
 
 	private final ArrayList<ArrayList<Staticproperties>> Allblobs;
+
 	private final double maxsearchRadius;
 	private final double initialsearchRadius;
+
 	private final int maxframe;
 	private final int maxframeGap;
+
 	private SimpleWeightedGraph<Staticproperties, DefaultWeightedEdge> graph;
+	private ArrayList<FramedBlob> Allmeasured;
+
 	protected Logger logger = Logger.DEFAULT_LOGGER;
 	protected String errorMessage;
-	private ArrayList<FramedBlob> Allmeasured;
 
 	public KFsearch(final ArrayList<ArrayList<Staticproperties>> Allblobs, final double maxsearchRadius,
 			final double initialsearchRadius, final int maxframe, final int maxframeGap) {
@@ -60,6 +64,8 @@ public class KFsearch implements Blob {
 
 		return Allmeasured;
 	}
+
+	
 
 	@Override
 	public boolean checkInput() {
@@ -125,8 +131,8 @@ public class KFsearch implements Blob {
 		 * search radius, then the fluoctuations over predicted states are
 		 * large.
 		 */
-		final double positionProcessStd = maxsearchRadius;
-		final double velocityProcessStd = maxsearchRadius;
+		final double positionProcessStd = maxsearchRadius / 2d;
+		final double velocityProcessStd = maxsearchRadius / 2d;
 
 		double meanSpotRadius = 0d;
 		for (final Staticproperties Blob : Secondorphan) {
@@ -138,8 +144,6 @@ public class KFsearch implements Blob {
 		final Map<CVMKalmanFilter, Staticproperties> kalmanFiltersMap = new HashMap<CVMKalmanFilter, Staticproperties>(
 				Secondorphan.size());
 
-		
-		
 		// Loop from the second frame to the last frame and build
 		// KalmanFilterMap
 
@@ -147,8 +151,8 @@ public class KFsearch implements Blob {
 
 			List<Staticproperties> measurements = Allblobs.get(frame);
 
-			System.out.println(
-					"Doing KF search in frame number: " + frame + " " + "Number of blobs:" + Allblobs.get(frame).size());
+			System.out.println("Doing KF search in frame number: " + frame + " " + "Number of blobs:"
+					+ Allblobs.get(frame).size());
 
 			// Make the preditiction map
 			final Map<ComparableRealPoint, CVMKalmanFilter> predictionMap = new HashMap<ComparableRealPoint, CVMKalmanFilter>(
@@ -203,11 +207,13 @@ public class KFsearch implements Blob {
 					graph.setEdgeWeight(edge, cost);
 					final FramedBlob prevframedBlob = new FramedBlob(frame - 1, source);
 					
+						
 					Allmeasured.add(prevframedBlob);
-					
+
 					final FramedBlob newframedBlob = new FramedBlob(frame, target);
-					
+
 					Allmeasured.add(newframedBlob);
+
 					// Update Kalman filter
 					kf.update(MeasureBlob(target));
 
@@ -265,14 +271,17 @@ public class KFsearch implements Blob {
 					final double cost = assignmentCosts.get(source);
 					graph.setEdgeWeight(edge, cost);
 					final FramedBlob prevframedBlob = new FramedBlob(frame - 1, source);
-					
+
 					Allmeasured.add(prevframedBlob);
 					
+
 					final FramedBlob newframedBlob = new FramedBlob(frame, target);
-					
+
 					Allmeasured.add(newframedBlob);
+
 				}
 			}
+
 			Firstorphan = Secondorphan;
 			// Deal with childless KFs.
 			for (final CVMKalmanFilter kf : childlessKFs) {
@@ -285,7 +294,10 @@ public class KFsearch implements Blob {
 					kalmanFiltersMap.remove(kf);
 				}
 			}
+
 		}
+		
+		
 
 		return true;
 	}
@@ -303,8 +315,8 @@ public class KFsearch implements Blob {
 	}
 
 	private static final Staticproperties MakeBlob(final ComparableRealPoint X, Staticproperties foundBlob) {
-		final Staticproperties newBlob = new Staticproperties(foundBlob.currentframe, foundBlob.maxextent, X, foundBlob.Intensity,
-				foundBlob.maxIntensityFrame, foundBlob.minIntensityFrame);
+		final Staticproperties newBlob = new Staticproperties(foundBlob.currentframe, foundBlob.maxextent, X,
+				foundBlob.Intensity, foundBlob.maxIntensityFrame, foundBlob.minIntensityFrame);
 		return newBlob;
 	}
 

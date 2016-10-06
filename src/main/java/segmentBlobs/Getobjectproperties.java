@@ -9,6 +9,7 @@ import com.sun.tools.javac.util.Pair;
 import blobObjects.Objprop;
 import ij.ImageJ;
 import net.imglib2.Cursor;
+import net.imglib2.Interval;
 import net.imglib2.Localizable;
 import net.imglib2.Point;
 import net.imglib2.RandomAccess;
@@ -23,6 +24,7 @@ import net.imglib2.labeling.NativeImgLabeling;
 import net.imglib2.type.logic.BitType;
 import net.imglib2.type.numeric.integer.IntType;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.Intervals;
 import net.imglib2.util.RealSum;
 import net.imglib2.view.Views;
 
@@ -65,6 +67,8 @@ public class Getobjectproperties {
 					Point pos = GetLocalmaxmin.computeMaxinLabel(inputimg,labelledimg,currentlabel);
 						
 						Pair<Integer, Double> pair = EstimatedRadius(pos, minRadius, maxRadius);
+						
+						
 						Radius = pair.fst;
 						totalintensity = pair.snd;
 			
@@ -76,7 +80,7 @@ public class Getobjectproperties {
 
 			return props;
 
-		
+						
 
 	}
 	
@@ -85,10 +89,38 @@ public class Getobjectproperties {
 		int BlobRadius = 0;
 		double Blobintensity = 0;
 		double maxdiff = -Double.MAX_VALUE;
-		int nRadius = maxRadius - minRadius;
 		
+		 int actualmaxRadius = maxRadius;
+		
+		 
+	        
+		
+		 int userRadius = maxRadius - minRadius;
+		
+	
+		/*
+		 * Here we correct for too big inputed maxDiamter. The routine below tries to estimate the size of the blob by
+		 * fitting rings of increasing diameter and chooses the diamter for which the total intensity difference is maximum.
+		 * 
+		 */
+		for (int Radius = 0; Radius < userRadius; ++Radius){
+			
+			
+				if (point.getDoublePosition(0) + Radius + minRadius >= inputimg.dimension(0)  || point.getDoublePosition(1) + Radius + minRadius >= inputimg.dimension(1) 
+						||point.getDoublePosition(0) - Radius - minRadius <= 0 || point.getDoublePosition(1) - Radius - minRadius <= 0 ){
+				actualmaxRadius = minRadius + Radius;
+				
+				break;
+				}
+				
+				
+				
+			
+				
+		}
+		
+		int nRadius = actualmaxRadius - minRadius;
 		final double[] totalintensity = new double[nRadius];
-		
 		for (int Radius = 0; Radius < nRadius; ++Radius){
 			
 			HyperSphere<FloatType> sphere = new HyperSphere<FloatType>(inputimg, point, Radius + minRadius);
@@ -98,6 +130,8 @@ public class Getobjectproperties {
 			while(sphereCursor.hasNext()){
 				
 				sphereCursor.fwd();
+			
+			
 				
 				final RealSum realSumA = new RealSum();
 				

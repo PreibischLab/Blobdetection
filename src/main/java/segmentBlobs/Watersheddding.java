@@ -75,9 +75,9 @@ public class Watersheddding {
 		
 		Float val = new Float(threshold);
 		
+		if (softThreshold)
+			val = new Float(0.5 * threshold);
 		
-		
-		System.out.println("Threshold Value for dist transform: "+ val);
 		GetLocalmaxmin.ThresholdingBit(inputimg, bitimg, val);
 
 		// cursor on the binary image

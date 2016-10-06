@@ -58,8 +58,7 @@ public class Segmentbywatershed {
 			// Determine local threshold value for each label
 			Float val =  GlobalThresholding.AutomaticThresholding(outimg);
 			Float threshold = new Float(val);
-			if (softThreshold)
-				threshold = new Float (0.5 * val);
+			
 			
 			final FinalInterval range = new FinalInterval(outimg.dimension(0), outimg.dimension(1));
 			double sigma1 = 0.9 * estimatedDiameter / 2;
