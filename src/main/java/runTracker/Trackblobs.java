@@ -10,6 +10,7 @@ import org.jgrapht.graph.SimpleWeightedGraph;
 
 import blobList.Makebloblist;
 import blobObjects.FramedBlob;
+import blobObjects.Subgraphs;
 import ij.ImageJ;
 import ij.ImagePlus;
 import net.imglib2.RandomAccessibleInterval;
@@ -21,6 +22,7 @@ import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
 import overlaytrack.DisplayBlobs;
 import overlaytrack.DisplayGraph;
+import overlaytrack.DisplaysubGraph;
 import segmentBlobs.Staticproperties;
 import trackerType.KFsearch;
 
@@ -32,10 +34,10 @@ public class Trackblobs {
 
 		// Load the stack of images
 		final RandomAccessibleInterval<FloatType> img = util.ImgLib2Util
-				.openAs32Bit(new File("../res/15stackimage.tif"), new ArrayImgFactory<FloatType>());
+				.openAs32Bit(new File("/Users/varunkapoor/Documents/Pierre_data/Latest_video/mCherry_ShortET-brightnessadjust.tif"), new ArrayImgFactory<FloatType>());
 		
 		final RandomAccessibleInterval<FloatType> preprocessedimg = util.ImgLib2Util
-				.openAs32Bit(new File("../res/15stackimage-pre.tif"), new ArrayImgFactory<FloatType>());
+				.openAs32Bit(new File("/Users/varunkapoor/Documents/Pierre_data/Latest_video/mCherry_ShortET-brightnessadjust-pre.tif"), new ArrayImgFactory<FloatType>());
 		
 		
 		int ndims = img.numDimensions();
@@ -89,28 +91,22 @@ public class Trackblobs {
 			// Create an object for Kalman Filter tracking
 			final int initialSearchradius = 50;
 			final int maxSearchradius = 20;
-			final int missedframes = 3;
+			final int missedframes = 10;
 		
 		    KFsearch KFsimple = new KFsearch(Allspots, initialSearchradius, maxSearchradius, (int)img.dimension(ndims - 1), missedframes);
 	        KFsimple.process();
 	        System.out.println("KF search process done");
-		    SimpleWeightedGraph<Staticproperties, DefaultWeightedEdge> graph = KFsimple.getResult();
-
+		    ArrayList<Subgraphs> subgraph = KFsimple.getFramedgraph();
 		    ArrayList<FramedBlob> frameandblob = KFsimple.getFramelist();
+		   
+		  
+		    DisplaysubGraph displaytracks = new DisplaysubGraph(imp, subgraph);
+		    displaytracks.getImp();
 		    
-		    
-		    // Overlay the track on the stack
-	   	 
-			if( graph!= null){
-			DisplayGraph displaytracks = new DisplayGraph(imp, graph, ndims - 1);
-			displaytracks.getImp();
-			}
-			
 		
 			RandomAccessibleInterval<FloatType> detimg = new ArrayImgFactory<FloatType>().create(img,
 					new FloatType());
-			RandomAccessibleInterval<FloatType> detimgsec = new ArrayImgFactory<FloatType>().create(img,
-					new FloatType());
+			
 			DisplayBlobs.Displaydetection(detimg, frameandblob);
 			
 			

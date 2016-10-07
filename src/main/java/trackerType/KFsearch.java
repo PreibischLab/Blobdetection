@@ -11,16 +11,20 @@ import java.util.NavigableSet;
 import net.imglib2.RealPoint;
 import java.util.HashSet;
 import net.imglib2.algorithm.Benchmark;
+import overlaytrack.DisplayGraph;
+
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
 import blobObjects.FramedBlob;
+import blobObjects.Subgraphs;
 import costMatrix.CostFunction;
 import costMatrix.IntensityDiffCostFunction;
 import costMatrix.JaqamanLinkingCostMatrixCreator;
 import costMatrix.SquareDistCostFunction;
 import graphconstructs.JaqamanLinker;
 import graphconstructs.Logger;
+import ij.ImagePlus;
 import segmentBlobs.Staticproperties;
 
 public class KFsearch implements Blob {
@@ -41,6 +45,7 @@ public class KFsearch implements Blob {
 
 	private SimpleWeightedGraph<Staticproperties, DefaultWeightedEdge> graph;
 	private ArrayList<FramedBlob> Allmeasured;
+	private ArrayList<Subgraphs> Framedgraph;
 
 	protected Logger logger = Logger.DEFAULT_LOGGER;
 	protected String errorMessage;
@@ -65,7 +70,10 @@ public class KFsearch implements Blob {
 		return Allmeasured;
 	}
 
-	
+	public ArrayList<Subgraphs> getFramedgraph(){
+		
+		return Framedgraph;
+	}
 
 	@Override
 	public boolean checkInput() {
@@ -81,6 +89,7 @@ public class KFsearch implements Blob {
 
 		graph = new SimpleWeightedGraph<Staticproperties, DefaultWeightedEdge>(DefaultWeightedEdge.class);
 		Allmeasured = new ArrayList<FramedBlob>();
+		Framedgraph = new ArrayList<Subgraphs>();
 
 		// Find first two non-zero frames containing blobs
 
@@ -149,6 +158,12 @@ public class KFsearch implements Blob {
 
 		for (int frame = Secondframe; frame < maxframe; ++frame) {
 
+			
+			
+	SimpleWeightedGraph<Staticproperties, DefaultWeightedEdge>	subgraph = 
+			new SimpleWeightedGraph<Staticproperties, DefaultWeightedEdge>(DefaultWeightedEdge.class);
+			
+			
 			List<Staticproperties> measurements = Allblobs.get(frame);
 
 			System.out.println("Doing KF search in frame number: " + frame + " " + "Number of blobs:"
@@ -205,6 +220,15 @@ public class KFsearch implements Blob {
 					final DefaultWeightedEdge edge = graph.addEdge(source, target);
 					final double cost = costs.get(cm);
 					graph.setEdgeWeight(edge, cost);
+					
+					subgraph.addVertex(source);
+					subgraph.addVertex(target);
+					final DefaultWeightedEdge subedge = subgraph.addEdge(source, target);
+					subgraph.setEdgeWeight(subedge, cost);
+					
+					Subgraphs currentframegraph = new Subgraphs(frame - 1, frame, subgraph); 
+					
+					Framedgraph.add(currentframegraph);
 					final FramedBlob prevframedBlob = new FramedBlob(frame - 1, source);
 					
 						
@@ -270,6 +294,18 @@ public class KFsearch implements Blob {
 					final DefaultWeightedEdge edge = graph.addEdge(source, target);
 					final double cost = assignmentCosts.get(source);
 					graph.setEdgeWeight(edge, cost);
+					
+					subgraph.addVertex(source);
+					subgraph.addVertex(target);
+					final DefaultWeightedEdge subedge = subgraph.addEdge(source, target);
+					subgraph.setEdgeWeight(subedge, cost);
+					
+					
+                    Subgraphs currentframegraph = new Subgraphs(frame - 1, frame, subgraph); 
+					
+					Framedgraph.add(currentframegraph);
+					
+					
 					final FramedBlob prevframedBlob = new FramedBlob(frame - 1, source);
 
 					Allmeasured.add(prevframedBlob);
@@ -294,6 +330,9 @@ public class KFsearch implements Blob {
 					kalmanFiltersMap.remove(kf);
 				}
 			}
+			
+		   	 
+		
 
 		}
 		

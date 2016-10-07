@@ -60,6 +60,7 @@ public class DisplayGraph {
 			}
 
 			o.clear();
+			getImp().getOverlay().clear(); 
 			for (DefaultWeightedEdge e : graph.edgeSet()) {
 				
 		        Staticproperties Spotbase = graph.getEdgeSource(e);
