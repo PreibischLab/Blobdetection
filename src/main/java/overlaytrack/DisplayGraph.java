@@ -29,11 +29,11 @@ public class DisplayGraph {
 	private final SimpleWeightedGraph<Staticproperties, DefaultWeightedEdge> graph;
 	private final int ndims;
 	
-	public DisplayGraph(final ImagePlus imp, SimpleWeightedGraph<Staticproperties, DefaultWeightedEdge> graph, final int ndims){
+	public DisplayGraph(final ImagePlus imp, SimpleWeightedGraph<Staticproperties, DefaultWeightedEdge> graph){
 		
 		this.imp = imp;
 		this.graph = graph;
-		this.ndims = ndims;
+		ndims = imp.getNDimensions();
 		
 		// add listener to the imageplus slice slider
 				SliceObserver sliceObserver = new SliceObserver( imp, new ImagePlusListener() );
@@ -70,7 +70,7 @@ public class DisplayGraph {
 		        
 		        final double[] startedge = new double[ndims];
 		        final double[] targetedge = new double[ndims];
-		        for (int d = 0; d < ndims; ++d){
+		        for (int d = 0; d < ndims - 1; ++d){
 		        	
 		        	startedge[d] = Spotbase.location[d];
 		        	

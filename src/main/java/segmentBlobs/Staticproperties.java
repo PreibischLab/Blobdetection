@@ -14,7 +14,6 @@ public final class Staticproperties  implements RealLocalizable, Comparable< Sta
 		public double maxIntensityFrame;
 		public double minIntensityFrame;
 		// Parameter for the cost function to decide how much weight to give to Intensity and to distance
-		private double alpha = 0.5;
 		/*
 		 * CONSTRUCTORS
 		 */
@@ -140,7 +139,7 @@ public final class Staticproperties  implements RealLocalizable, Comparable< Sta
 				distance += (sourceLocation[d]  - targetLocation[d])  * (sourceLocation[d]  - targetLocation[d] );
 			}
 			
-			double IntensityweightedDistance = alpha *distance +  (1 - alpha) * (Intensity - target.Intensity) * (Intensity - target.Intensity);
+			double IntensityweightedDistance =  ((distance ))* (Intensity / target.Intensity) * (Intensity / target.Intensity);
 			
 			return IntensityweightedDistance;
 		}

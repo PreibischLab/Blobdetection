@@ -88,7 +88,7 @@ public class Getobjectproperties {
 		
 		int BlobRadius = 0;
 		double Blobintensity = 0;
-		double maxdiff = -Double.MAX_VALUE;
+		double maxdiff = Double.MIN_VALUE;
 		
 		 int actualmaxRadius = maxRadius;
 		
@@ -121,6 +121,9 @@ public class Getobjectproperties {
 		
 		int nRadius = actualmaxRadius - minRadius;
 		final double[] totalintensity = new double[nRadius];
+		final double[] meanintensity = new double[nRadius];
+		final double[] totalarea = new double[nRadius];
+		
 		for (int Radius = 0; Radius < nRadius; ++Radius){
 			
 			HyperSphere<FloatType> sphere = new HyperSphere<FloatType>(inputimg, point, Radius + minRadius);
@@ -131,7 +134,7 @@ public class Getobjectproperties {
 				
 				sphereCursor.fwd();
 			
-			
+			totalarea[Radius]++;
 				
 				final RealSum realSumA = new RealSum();
 				
@@ -142,6 +145,7 @@ public class Getobjectproperties {
 				
 				
 				    totalintensity[Radius] = realSumA.getSum();
+				    meanintensity[Radius] = totalintensity[Radius] / totalarea[Radius];
 				
 			}
 			
@@ -150,9 +154,9 @@ public class Getobjectproperties {
 		
 		for (int Radius = 0; Radius < nRadius - 1; ++Radius){
 			
-			if (totalintensity[Radius] - totalintensity[Radius + 1] > maxdiff){
+			if (meanintensity[Radius] - meanintensity[Radius + 1] > maxdiff){
 				
-				maxdiff = totalintensity[Radius] - totalintensity[Radius + 1];
+				maxdiff = meanintensity[Radius] - meanintensity[Radius + 1];
 				
 				BlobRadius = Radius + minRadius;
 				

@@ -39,7 +39,7 @@ public class KFsearch implements Blob {
 
 	private final double maxsearchRadius;
 	private final double initialsearchRadius;
-
+	private final CostFunction<Staticproperties, Staticproperties> UserchosenCostFunction;
 	private final int maxframe;
 	private final int maxframeGap;
 
@@ -50,9 +50,11 @@ public class KFsearch implements Blob {
 	protected Logger logger = Logger.DEFAULT_LOGGER;
 	protected String errorMessage;
 
-	public KFsearch(final ArrayList<ArrayList<Staticproperties>> Allblobs, final double maxsearchRadius,
+	public KFsearch(final ArrayList<ArrayList<Staticproperties>> Allblobs,
+			final CostFunction<Staticproperties, Staticproperties> UserchosenCostFunction, final double maxsearchRadius,
 			final double initialsearchRadius, final int maxframe, final int maxframeGap) {
 		this.Allblobs = Allblobs;
+		this.UserchosenCostFunction = UserchosenCostFunction;
 		this.initialsearchRadius = initialsearchRadius;
 		this.maxsearchRadius = maxsearchRadius;
 		this.maxframe = maxframe;
@@ -70,8 +72,8 @@ public class KFsearch implements Blob {
 		return Allmeasured;
 	}
 
-	public ArrayList<Subgraphs> getFramedgraph(){
-		
+	public ArrayList<Subgraphs> getFramedgraph() {
+
 		return Framedgraph;
 	}
 
@@ -119,16 +121,6 @@ public class KFsearch implements Blob {
 		// Max KF search cost.
 		final double maxCost = maxsearchRadius * maxsearchRadius;
 
-		// Cost function to nucleate KFs.
-
-		// Distance based Cost function (uncomment the method if has to be used)
-
-		final CostFunction<Staticproperties, Staticproperties> DistCostFunction = new SquareDistCostFunction();
-
-		// Intensity based Cost function (Comment out the method if previous
-		// method is being used)
-		final CostFunction<Staticproperties, Staticproperties> IntensityCostFunction = new IntensityDiffCostFunction();
-
 		// Max cost to nucleate KFs.
 		final double maxInitialCost = initialsearchRadius * initialsearchRadius;
 
@@ -158,12 +150,9 @@ public class KFsearch implements Blob {
 
 		for (int frame = Secondframe; frame < maxframe; ++frame) {
 
-			
-			
-	SimpleWeightedGraph<Staticproperties, DefaultWeightedEdge>	subgraph = 
-			new SimpleWeightedGraph<Staticproperties, DefaultWeightedEdge>(DefaultWeightedEdge.class);
-			
-			
+			SimpleWeightedGraph<Staticproperties, DefaultWeightedEdge> subgraph = new SimpleWeightedGraph<Staticproperties, DefaultWeightedEdge>(
+					DefaultWeightedEdge.class);
+
 			List<Staticproperties> measurements = Allblobs.get(frame);
 
 			System.out.println("Doing KF search in frame number: " + frame + " " + "Number of blobs:"
@@ -220,18 +209,17 @@ public class KFsearch implements Blob {
 					final DefaultWeightedEdge edge = graph.addEdge(source, target);
 					final double cost = costs.get(cm);
 					graph.setEdgeWeight(edge, cost);
-					
+
 					subgraph.addVertex(source);
 					subgraph.addVertex(target);
 					final DefaultWeightedEdge subedge = subgraph.addEdge(source, target);
 					subgraph.setEdgeWeight(subedge, cost);
-					
-					Subgraphs currentframegraph = new Subgraphs(frame - 1, frame, subgraph); 
-					
+
+					Subgraphs currentframegraph = new Subgraphs(frame - 1, frame, subgraph);
+
 					Framedgraph.add(currentframegraph);
 					final FramedBlob prevframedBlob = new FramedBlob(frame - 1, source);
-					
-						
+
 					Allmeasured.add(prevframedBlob);
 
 					final FramedBlob newframedBlob = new FramedBlob(frame, target);
@@ -260,7 +248,7 @@ public class KFsearch implements Blob {
 				// Trying to link orphans with unlinked candidates.
 
 				final JaqamanLinkingCostMatrixCreator<Staticproperties, Staticproperties> ic = new JaqamanLinkingCostMatrixCreator<Staticproperties, Staticproperties>(
-						Firstorphan, Secondorphan, IntensityCostFunction, maxInitialCost, ALTERNATIVE_COST_FACTOR,
+						Firstorphan, Secondorphan, UserchosenCostFunction, maxInitialCost, ALTERNATIVE_COST_FACTOR,
 						PERCENTILE);
 				final JaqamanLinker<Staticproperties, Staticproperties> newLinker = new JaqamanLinker<Staticproperties, Staticproperties>(
 						ic);
@@ -294,22 +282,19 @@ public class KFsearch implements Blob {
 					final DefaultWeightedEdge edge = graph.addEdge(source, target);
 					final double cost = assignmentCosts.get(source);
 					graph.setEdgeWeight(edge, cost);
-					
+
 					subgraph.addVertex(source);
 					subgraph.addVertex(target);
 					final DefaultWeightedEdge subedge = subgraph.addEdge(source, target);
 					subgraph.setEdgeWeight(subedge, cost);
-					
-					
-                    Subgraphs currentframegraph = new Subgraphs(frame - 1, frame, subgraph); 
-					
+
+					Subgraphs currentframegraph = new Subgraphs(frame - 1, frame, subgraph);
+
 					Framedgraph.add(currentframegraph);
-					
-					
+
 					final FramedBlob prevframedBlob = new FramedBlob(frame - 1, source);
 
 					Allmeasured.add(prevframedBlob);
-					
 
 					final FramedBlob newframedBlob = new FramedBlob(frame, target);
 
@@ -330,13 +315,8 @@ public class KFsearch implements Blob {
 					kalmanFiltersMap.remove(kf);
 				}
 			}
-			
-		   	 
-		
 
 		}
-		
-		
 
 		return true;
 	}
