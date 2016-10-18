@@ -11,8 +11,7 @@ public final class Staticproperties  implements RealLocalizable, Comparable< Sta
 		public int currentframe;
 		public  double[] location;
 		public  double Intensity;
-		public double maxIntensityFrame;
-		public double minIntensityFrame;
+		
 		// Parameter for the cost function to decide how much weight to give to Intensity and to distance
 		/*
 		 * CONSTRUCTORS
@@ -32,13 +31,12 @@ public final class Staticproperties  implements RealLocalizable, Comparable< Sta
 		 */
 		
 		public Staticproperties(final int Label, final int currentframe, final double maxextent, final double[] location,
-				final double Intensity, final double maxIntensityFrame, final double minIntensityFrame) {
+				final double Intensity) {
 			this.currentframe = currentframe;
 			this.maxextent = maxextent;
 			this.location = location;
 			this.Intensity = Intensity;
-			this.maxIntensityFrame = maxIntensityFrame;
-			this.minIntensityFrame = minIntensityFrame;
+			
 
 		}
 		
@@ -55,13 +53,12 @@ public final class Staticproperties  implements RealLocalizable, Comparable< Sta
 		 */
 		
 		public Staticproperties(final int currentframe, final double maxextent, final double[] location,
-				final double Intensity, final double maxIntensityFrame, final double minIntensityFrame) {
+				final double Intensity) {
 			this.currentframe = currentframe;
 			this.maxextent = maxextent;
 			this.location = location;
 			this.Intensity = Intensity;
-			this.maxIntensityFrame = maxIntensityFrame;
-			this.minIntensityFrame = minIntensityFrame;
+			
 
 		}
 		
@@ -77,9 +74,9 @@ public final class Staticproperties  implements RealLocalizable, Comparable< Sta
 		 */
 		
 		public Staticproperties(final int currentframe, final double maxextent, final RealLocalizable location,
-				final double Intensity, final double maxIntensityFrame, final double minIntensityFrame) {
+				final double Intensity) {
 			
-			this(currentframe, maxextent, new double [] {location.getDoublePosition(0) , location.getDoublePosition(1)}, Intensity, maxIntensityFrame, minIntensityFrame);
+			this(currentframe, maxextent, new double [] {location.getDoublePosition(0) , location.getDoublePosition(1)}, Intensity);
 			
 			
 

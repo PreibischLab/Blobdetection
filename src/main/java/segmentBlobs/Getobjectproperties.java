@@ -14,7 +14,9 @@ import net.imglib2.Localizable;
 import net.imglib2.Point;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.RealLocalizable;
 import net.imglib2.algorithm.labeling.AllConnectedComponents;
+import net.imglib2.algorithm.localextrema.RefinedPeak;
 import net.imglib2.algorithm.region.hypersphere.HyperSphere;
 import net.imglib2.algorithm.region.hypersphere.HyperSphereCursor;
 import net.imglib2.algorithm.stats.Normalize;
@@ -38,138 +40,165 @@ public class Getobjectproperties {
 
 	private final RandomAccessibleInterval<FloatType> inputimg;
 	private final RandomAccessibleInterval<IntType> labelledimg;
+	private final RefinedPeak<Point> BlobLocation;
 	private final int ndims;
-	private final int minRadius;
-	private final int maxRadius;
-	
-	
-	public Getobjectproperties(final RandomAccessibleInterval<FloatType> inputimg, 
-			final RandomAccessibleInterval<IntType> labelledimg, final int minRadius, final int maxRadius){
+	private final int estimatedDiameter;
+	private int minRadius;
+	private int maxRadius;
+
+	public Getobjectproperties(final RandomAccessibleInterval<FloatType> inputimg,
+			final RandomAccessibleInterval<IntType> labelledimg, final RefinedPeak<Point> BlobLocation, final int estimatedDiamter) {
 		this.inputimg = inputimg;
 		this.labelledimg = labelledimg;
 		this.ndims = inputimg.numDimensions();
-		this.minRadius = minRadius;
-		this.maxRadius = maxRadius;
-		
+		this.BlobLocation = BlobLocation;
+		this.estimatedDiameter = estimatedDiamter;
+		minRadius = estimatedDiamter / 2;
+		maxRadius = 5 * minRadius;
+
 	}
-	
 
 	// Once we have the label we get bounding box (BB for each of the labels, we
 	// can only choose to get the BB for the largest region
 	// after neglecting the background which carries the label 0
-	public  Objprop Getobjectprops( int currentlabel) {
+	public Objprop Getobjectprops() {
 
-			double Radius = 0;
-			double totalintensity = 0;
-			
-					
-					
-					Point pos = GetLocalmaxmin.computeMaxinLabel(inputimg,labelledimg,currentlabel);
-						
-						Pair<Integer, Double> pair = EstimatedRadius(pos, minRadius, maxRadius);
-						
-						
-						Radius = pair.fst;
-						totalintensity = pair.snd;
-			
-			
-			// Store all object properties in the java object and arraylist of
-			// that object
-			final Objprop props = new Objprop(currentlabel, 2 * Radius , totalintensity);
-			
+		double Radius = 0;
+		double totalintensity = 0;
 
-			return props;
 
-						
+		Pair<Double, Double> pair = EstimatedRadius(BlobLocation, minRadius, maxRadius);
 
+		Radius = pair.fst;
+		totalintensity = pair.snd;
+
+		// Store all object properties in the java object and arraylist of
+		// that object
+		final Objprop props = new Objprop( 2 * Radius, totalintensity);
+		
+		return props;
+		
 	}
-	
-	public Pair<Integer, Double> EstimatedRadius(Localizable point, int minRadius, int maxRadius){
-		
-		int BlobRadius = 0;
-		double Blobintensity = 0;
-		double maxdiff = Double.MIN_VALUE;
-		
-		 int actualmaxRadius = maxRadius;
-		
-		 
-	        
-		
-		 int userRadius = maxRadius - minRadius;
-		
-	
+
+	public Pair<Double, Double> EstimatedRadius(RealLocalizable point, int minRadius, int maxRadius) {
+
+		int BlobRadius = 0, BlobRadiuspre = 0, BlobRadiuspost = 0;
+		double Blobintensity = 0, Blobintensitypre = 0, Blobintensitypost = 0;
+		double maxdiff = -Double.MIN_VALUE;
+
+		int actualmaxRadius = maxRadius;
+
+		int userRadius = maxRadius - minRadius;
+
 		/*
-		 * Here we correct for too big inputed maxDiamter. The routine below tries to estimate the size of the blob by
-		 * fitting rings of increasing diameter and chooses the diamter for which the total intensity difference is maximum.
+		 * Here we correct for too big inputed maxDiamter. The routine below
+		 * tries to estimate the size of the blob by fitting rings of increasing
+		 * diameter and chooses the diamter for which the total intensity
+		 * difference is maximum.
 		 * 
 		 */
-		for (int Radius = 0; Radius < userRadius; ++Radius){
-			
-			
-				if (point.getDoublePosition(0) + Radius + minRadius >= inputimg.dimension(0)  || point.getDoublePosition(1) + Radius + minRadius >= inputimg.dimension(1) 
-						||point.getDoublePosition(0) - Radius - minRadius <= 0 || point.getDoublePosition(1) - Radius - minRadius <= 0 ){
+		for (int Radius = 0; Radius < userRadius; ++Radius) {
+
+			if (point.getDoublePosition(0) + Radius + minRadius >= inputimg.dimension(0)
+					|| point.getDoublePosition(1) + Radius + minRadius >= inputimg.dimension(1)
+					|| point.getDoublePosition(0) - Radius - minRadius <= 0
+					|| point.getDoublePosition(1) - Radius - minRadius <= 0) {
 				actualmaxRadius = minRadius + Radius;
-				
+
 				break;
-				}
-				
-				
-				
-			
-				
+			}
+
 		}
-		
+
 		int nRadius = actualmaxRadius - minRadius;
 		final double[] totalintensity = new double[nRadius];
 		final double[] meanintensity = new double[nRadius];
 		final double[] totalarea = new double[nRadius];
+		Point floatpoint = new Point(ndims);
+		for (int d = 0; d < ndims; ++d){
+			
+			floatpoint.setPosition((int)point.getDoublePosition(d), d);
 		
-		for (int Radius = 0; Radius < nRadius; ++Radius){
 			
-			HyperSphere<FloatType> sphere = new HyperSphere<FloatType>(inputimg, point, Radius + minRadius);
-			
+		}
+		
+		for (int Radius = 0; Radius < nRadius; ++Radius) {
+
+			HyperSphere<FloatType> sphere = new HyperSphere<FloatType>(inputimg, floatpoint, Radius + minRadius);
+
 			HyperSphereCursor<FloatType> sphereCursor = sphere.localizingCursor();
-			
-			while(sphereCursor.hasNext()){
-				
+
+			while (sphereCursor.hasNext()) {
+
 				sphereCursor.fwd();
-			
-			totalarea[Radius]++;
-				
+
+				totalarea[Radius]++;
+
 				final RealSum realSumA = new RealSum();
-				
 
 				final FloatType type = sphereCursor.get();
-				
-					realSumA.add(type.getRealDouble());
-				
-				
-				    totalintensity[Radius] = realSumA.getSum();
-				    meanintensity[Radius] = totalintensity[Radius] / totalarea[Radius];
-				
+
+				realSumA.add(type.getRealDouble());
+
+				totalintensity[Radius] = realSumA.getSum();
+				meanintensity[Radius] = totalintensity[Radius] / totalarea[Radius];
+
 			}
-			
-			
+
 		}
-		
-		for (int Radius = 0; Radius < nRadius - 1; ++Radius){
-			
-			if (meanintensity[Radius] - meanintensity[Radius + 1] > maxdiff){
-				
+
+		for (int Radius = 1; Radius < nRadius - 2; ++Radius) {
+
+			if (meanintensity[Radius] - meanintensity[Radius + 1] > maxdiff) {
+
 				maxdiff = meanintensity[Radius] - meanintensity[Radius + 1];
-				
+
 				BlobRadius = Radius + minRadius;
-				
+
 				Blobintensity = totalintensity[Radius];
+				
+				BlobRadiuspre = Radius + minRadius - 1;
+
+				Blobintensitypre = totalintensity[Radius - 1];
+				
+				BlobRadiuspost = Radius + minRadius + 1;
+
+				Blobintensitypost = totalintensity[Radius + 1];
+				
+				
 			}
 		}
+
 		
-		Pair<Integer, Double> pair = new Pair<Integer, Double>(BlobRadius, Blobintensity);
+		double Bestradius;
 		
+		if (1 > BlobRadius || totalintensity.length - 1 == BlobRadius){
+			
+			Bestradius = BlobRadius;
+		}
+		
+		else{
+			
+			Bestradius = quadratic1DInterpolation( BlobRadiuspre, Blobintensitypre,BlobRadius,
+					Blobintensity, BlobRadiuspost, Blobintensitypost);
+		}
+
+		Pair<Double, Double> pair = new Pair<Double, Double>(Bestradius, Blobintensity);
+
 		return pair;
 	}
-	
-	public  double Distance(final double[] cordone, final double[] cordtwo) {
+	private static final double quadratic1DInterpolation( final double x1, final double y1, final double x2, final double y2, final double x3, final double y3 )
+	{
+		final double d2 = 2 * ( ( y3 - y2 ) / ( x3 - x2 ) - ( y2 - y1 ) / ( x2 - x1 ) ) / ( x3 - x1 );
+		if ( d2 == 0 )
+			return x2;
+		else
+		{
+			final double d1 = ( y3 - y2 ) / ( x3 - x2 ) - d2 / 2 * ( x3 - x2 );
+			return x2 - d1 / d2;
+		}
+	}
+	public double Distance(final double[] cordone, final double[] cordtwo) {
 
 		double distance = 0;
 		final double ndims = cordone.length;

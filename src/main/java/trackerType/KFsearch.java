@@ -335,7 +335,7 @@ public class KFsearch implements Blob {
 
 	private static final Staticproperties MakeBlob(final ComparableRealPoint X, Staticproperties foundBlob) {
 		final Staticproperties newBlob = new Staticproperties(foundBlob.currentframe, foundBlob.maxextent, X,
-				foundBlob.Intensity, foundBlob.maxIntensityFrame, foundBlob.minIntensityFrame);
+				foundBlob.Intensity);
 		return newBlob;
 	}
 

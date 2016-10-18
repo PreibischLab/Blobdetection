@@ -26,6 +26,8 @@ import net.imglib2.view.Views;
 import overlaytrack.DisplayBlobs;
 import overlaytrack.DisplayGraph;
 import overlaytrack.DisplaysubGraph;
+import preProcessingTools.Kernels;
+import preProcessingTools.MedianFilter2D;
 import segmentBlobs.Staticproperties;
 import trackerType.KFsearch;
 
@@ -37,13 +39,9 @@ public class Trackblobs {
 
 		// Load the stack of images
 		final RandomAccessibleInterval<FloatType> img = util.ImgLib2Util.openAs32Bit(
-				new File("/Users/varunkapoor/Documents/Pierre_data/Latest_video/mCherry_LongET-adjust-short.tif"),
+				new File("/Users/varunkapoor/Documents/Pierre_data/Latest_video/mCherry_ShortET-adjust-150.tif"),
 				new ArrayImgFactory<FloatType>());
 
-		final RandomAccessibleInterval<FloatType> preprocessedimg = util.ImgLib2Util.openAs32Bit(
-				new File(
-						"/Users/varunkapoor/Documents/Pierre_data/Latest_video/mCherry_LongET-adjust-pre-short.tif"),
-				new ArrayImgFactory<FloatType>());
 
 		int ndims = img.numDimensions();
 		new Normalize();
@@ -51,11 +49,14 @@ public class Trackblobs {
 		FloatType minval = new FloatType(0);
 		FloatType maxval = new FloatType(1);
 		Normalize.normalize(Views.iterable(img), minval, maxval);
-		Normalize.normalize(Views.iterable(preprocessedimg), minval, maxval);
+
 		ImagePlus imp = ImageJFunctions.show(img);
 		ImagePlus impcopy = ImageJFunctions.show(img);
+		
+		
 
-		final boolean softThreshold = true;
+		
+		final boolean softThreshold = false;
 		// Noisye: 15stackimage.tif
 		// Highly Noisy: ../res/15HighNoisyblobs.tif
 		// ../res/C1-test-pre.tif
@@ -65,8 +66,10 @@ public class Trackblobs {
 		// Display stack
 		// ImageJFunctions.show(img);
 
-		final int minDiameter = 5;
-		final int maxDiameter = 50;
+		
+		final int estimatedDiameter = 15;
+		
+		
 		final double[] calibration = { imp.getCalibration().pixelWidth, imp.getCalibration().pixelHeight,
 				imp.getCalibration().pixelDepth };
 		// Cost function 
@@ -85,12 +88,21 @@ public class Trackblobs {
 		final int maxframe = (int) img.dimension(ndims - 1);
 		ArrayList<ArrayList<Staticproperties>> Allspots = new ArrayList<ArrayList<Staticproperties>>();
 
+		
+	
 		for (int i = 0; i < maxframe; ++i) {
 			IntervalView<FloatType> currentframe = Views.hyperSlice(img, ndims - 1, i);
-			IntervalView<FloatType> currentframepre = Views.hyperSlice(preprocessedimg, ndims - 1, i);
+			
+			final MedianFilter2D<FloatType> medfilter = new MedianFilter2D<FloatType>( currentframe, 1);
+			medfilter.process();
+			final RandomAccessibleInterval<FloatType> inputimg = medfilter.getResult();
+			RandomAccessibleInterval<FloatType> preprocessedimg = Kernels.Supressthresh(inputimg);
+			Normalize.normalize(Views.iterable(preprocessedimg), minval, maxval);
+			
+			RandomAccessibleInterval<FloatType> currentframepre = preprocessedimg;
 
 			ArrayList<Staticproperties> Spotmaxbase = Makebloblist.returnBloblist(currentframe, currentframepre,
-					minDiameter, maxDiameter, calibration, i, softThreshold);
+					estimatedDiameter, calibration, i, softThreshold);
 			Allspots.add(i, Spotmaxbase);
 			System.out.println("Finding blobs in Frame: " + i);
 			System.out.println("Total number of Blobs found: " + Spotmaxbase.size());
@@ -106,7 +118,9 @@ public class Trackblobs {
 		 * "NN search process done");
 		 */
 		// Create an object for Kalman Filter tracking
+		// Initial search radius as maximal distance allowed for initial search to initiate the Kalman Filter tracks
 		final int initialSearchradius = 50;
+		// For linking costs, this is how far we allow for the blob to move
 		final int maxSearchradius = 20;
 		final int missedframes = 20;
 
