@@ -39,7 +39,7 @@ public class Trackblobs {
 
 		// Load the stack of images
 		final RandomAccessibleInterval<FloatType> img = util.ImgLib2Util.openAs32Bit(
-				new File("/Users/varunkapoor/Documents/Pierre_data/Latest_video/mCherry_ShortET-adjust-150.tif"),
+				new File("/Users/varunkapoor/Documents/Pierre_data/Recording_Cell_Culture_Kapoor/mCherry_ShortET_duplicate.tif"),
 				new ArrayImgFactory<FloatType>());
 
 
@@ -67,7 +67,8 @@ public class Trackblobs {
 		// ImageJFunctions.show(img);
 
 		
-		final int estimatedDiameter = 15;
+		final int minDiameter = 2;
+		final int maxDiameter= 50;
 		
 		
 		final double[] calibration = { imp.getCalibration().pixelWidth, imp.getCalibration().pixelHeight,
@@ -102,7 +103,7 @@ public class Trackblobs {
 			RandomAccessibleInterval<FloatType> currentframepre = preprocessedimg;
 
 			ArrayList<Staticproperties> Spotmaxbase = Makebloblist.returnBloblist(currentframe, currentframepre,
-					estimatedDiameter, calibration, i, softThreshold);
+					minDiameter, maxDiameter, calibration, i, softThreshold);
 			Allspots.add(i, Spotmaxbase);
 			System.out.println("Finding blobs in Frame: " + i);
 			System.out.println("Total number of Blobs found: " + Spotmaxbase.size());
@@ -121,7 +122,7 @@ public class Trackblobs {
 		// Initial search radius as maximal distance allowed for initial search to initiate the Kalman Filter tracks
 		final int initialSearchradius = 50;
 		// For linking costs, this is how far we allow for the blob to move
-		final int maxSearchradius = 20;
+		final int maxSearchradius = 15;
 		final int missedframes = 20;
 
 		KFsearch KFsimple = new KFsearch(Allspots, DistCostFunction, initialSearchradius, maxSearchradius, (int) img.dimension(ndims - 1),

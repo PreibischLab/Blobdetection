@@ -11,6 +11,7 @@ import fiji.tool.SliceObserver;
 import ij.ImagePlus;
 import ij.gui.Line;
 import ij.gui.Overlay;
+import ij.io.FileSaver;
 import overlaytrack.DisplayGraph.ImagePlusListener;
 import segmentBlobs.Staticproperties;
 
@@ -76,10 +77,6 @@ public ImagePlus getImp() { return this.imp; }
 					        	
 					        }
 					        
-					        
-					      
-					        
-					       
 					       
 					        Line newline = new Line(startedge[0], startedge[1], targetedge[0], targetedge[1]);
 							newline.setStrokeColor(Color.GREEN);
@@ -95,7 +92,8 @@ public ImagePlus getImp() { return this.imp; }
 			}
 			
 			
-			
+			final FileSaver savestart = new FileSaver(imp);
+			savestart.saveAsJpeg("TrackBlob_subgraph"+arg0.getCurrentSlice());
 			
 			System.out.println( arg0.getCurrentSlice() );
 		}		

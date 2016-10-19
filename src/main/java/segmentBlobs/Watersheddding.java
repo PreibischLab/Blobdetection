@@ -29,29 +29,26 @@ import segmentBlobs.GlobalThresholding;
 
 @SuppressWarnings("deprecation")
 public class Watersheddding {
-	
+
 	public static enum InverseType {
 		Straight, Inverse
 	}
-	
-	
+
 	public static RandomAccessibleInterval<IntType> Dowatersheddingonly(
 			final RandomAccessibleInterval<FloatType> biginputimg, final boolean softThreshold) {
-
-	
 
 		// Perform the distance transform
 		final Img<FloatType> distimg = new ArrayImgFactory<FloatType>().create(biginputimg, new FloatType());
 
-		RandomAccessibleInterval<BitType> bitimg = DistanceTransformImage(biginputimg, distimg, InverseType.Straight, softThreshold);
+		RandomAccessibleInterval<BitType> bitimg = DistanceTransformImage(biginputimg, distimg, InverseType.Straight,
+				softThreshold);
 
-		
 		// Prepare seed image for watershedding
 		NativeImgLabeling<Integer, IntType> oldseedLabeling = new NativeImgLabeling<Integer, IntType>(
 				new ArrayImgFactory<IntType>().create(biginputimg, new IntType()));
 
 		oldseedLabeling = PrepareSeedImage(biginputimg, bitimg);
-		
+
 		// Do watershedding on the distance transformed image
 
 		NativeImgLabeling<Integer, IntType> outputLabeling = new NativeImgLabeling<Integer, IntType>(
@@ -59,7 +56,6 @@ public class Watersheddding {
 
 		outputLabeling = GetlabeledImage(distimg, oldseedLabeling);
 
-		
 		return outputLabeling.getStorageImg();
 	}
 
@@ -72,12 +68,12 @@ public class Watersheddding {
 		final RealPointSampleList<BitType> list = new RealPointSampleList<BitType>(n);
 
 		final Float threshold = GlobalThresholding.AutomaticThresholding(inputimg);
-		
+
 		Float val = new Float(threshold);
-		
+
 		if (softThreshold)
-			val = new Float(0.5 * threshold);
-		
+			val = new Float(0.1 * threshold);
+
 		GetLocalmaxmin.ThresholdingBit(inputimg, bitimg, val);
 
 		// cursor on the binary image
@@ -132,21 +128,20 @@ public class Watersheddding {
 				ranac.get().setZero();
 			}
 		}
-return bitimg;
+		return bitimg;
 	}
-	public static NativeImgLabeling<Integer, IntType> PrepareSeedImage(RandomAccessibleInterval<FloatType> inputimg, RandomAccessibleInterval<BitType> maximgBit ) {
 
+	public static NativeImgLabeling<Integer, IntType> PrepareSeedImage(RandomAccessibleInterval<FloatType> inputimg,
+			RandomAccessibleInterval<BitType> maximgBit) {
 
-	
 		// Old Labeling type
-		
+
 		final NativeImgLabeling<Integer, IntType> oldseedLabeling = new NativeImgLabeling<Integer, IntType>(
 				new ArrayImgFactory<IntType>().create(inputimg, new IntType()));
 
 		// The label generator for both new and old type
 		final Iterator<Integer> labelGenerator = AllConnectedComponents.getIntegerNames(0);
 
-		
 		// Getting unique labelled image (old version)
 		AllConnectedComponents.labelAllConnectedComponents(oldseedLabeling, maximgBit, labelGenerator,
 				AllConnectedComponents.getStructuringElement(inputimg.numDimensions()));
