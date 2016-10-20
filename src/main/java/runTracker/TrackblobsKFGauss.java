@@ -29,6 +29,7 @@ import overlaytrack.DisplaysubGraph;
 import preProcessingTools.Kernels;
 import preProcessingTools.MedianFilter2D;
 import segmentBlobs.Staticproperties;
+import trackerType.KFSearchRefined;
 import trackerType.KFsearch;
 
 public class TrackblobsKFGauss {
@@ -40,7 +41,7 @@ public class TrackblobsKFGauss {
 		// Load the stack of images
 		final RandomAccessibleInterval<FloatType> img = util.ImgLib2Util.openAs32Bit(
 				new File(
-						"/Users/varunkapoor/Documents/Pierre_data/Recording_Cell_Culture_Kapoor/mCherry_ShortET-secdup-short.tif"),
+						"/Users/varunkapoor/Documents/Pierre_data/Recording_Cell_Culture_Kapoor/mCherry_ShortET-secdup-test.tif"),
 				new ArrayImgFactory<FloatType>());
 
 		int ndims = img.numDimensions();
@@ -82,9 +83,8 @@ public class TrackblobsKFGauss {
 
 			// To get Blobs via LM fit and Gaussian detection, comment the two
 			// lines below if using DoG detection
-			final int maxDiameter = 100;
 			ArrayList<Staticproperties> Spotmaxbase = Makebloblist.returnRefinedBloblist(currentframe, currentframepre,
-					i, maxDiameter);
+					i);
 
 			Allspots.add(i, Spotmaxbase);
 			System.out.println("Finding blobs in Frame: " + i);
@@ -99,7 +99,7 @@ public class TrackblobsKFGauss {
 		final int maxSearchradius = 15;
 		final int missedframes = 20;
 
-		KFsearch KFsimple = new KFsearch(Allspots, DistCostFunction, initialSearchradius, maxSearchradius,
+		KFSearchRefined KFsimple = new KFSearchRefined(Allspots, DistCostFunction, initialSearchradius, maxSearchradius,
 				(int) img.dimension(ndims - 1), missedframes);
 		KFsimple.process();
 		System.out.println("KF search process done");

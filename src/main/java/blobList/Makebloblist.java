@@ -30,7 +30,7 @@ public class Makebloblist {
 	}
 
 	public static ArrayList<Staticproperties> returnRefinedBloblist(final IntervalView<FloatType> baseframe,
-			RandomAccessibleInterval<FloatType> preinputimg, int framenumber, int radius) throws Exception {
+			RandomAccessibleInterval<FloatType> preinputimg, int framenumber) throws Exception {
 
 		RandomAccessibleInterval<IntType> labelledimagebase = new ArrayImgFactory<IntType>().create(baseframe,
 				new IntType());
@@ -40,7 +40,7 @@ public class Makebloblist {
 
 		// Refined List containing all the maximas in baseframe
 		ArrayList<Staticproperties> Spotmaxbase = segmentBlobs.Segmentbywatershed.Gaussdetection(baseframe,
-				labelledimagebase, framenumber, radius);
+				labelledimagebase, framenumber);
 		return Spotmaxbase;
 
 	}

@@ -8,6 +8,7 @@ package blobObjects;
 		public double[] sigma;
 		public  double totalintensity;
 		public double[] location;
+		public double corr;
 	
 
 		public Objprop(final int Label, final double diameter,final double totalintensity) {
@@ -18,13 +19,15 @@ package blobObjects;
 
 		}
 		
-		public Objprop(final int Label, final double diameter, final double[] location, final double[] sigma, final double totalintensity){
+		public Objprop(final int Label, final double diameter, final double[] location, final double[] sigma, final double corr,
+				final double totalintensity){
 			
 			this.Label = Label;
 			this.sigma = sigma;
 			this.totalintensity = totalintensity;
 			this.location = location;
 			this.diameter = diameter;
+			this.corr = corr;
 			
 			
 			

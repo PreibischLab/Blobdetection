@@ -32,7 +32,7 @@ public class Segmentbywatershed {
 	
 	
 	public static ArrayList<Staticproperties> Gaussdetection(final IntervalView<FloatType> blobimage,
-			final RandomAccessibleInterval<IntType> labelledimage, int framenumber, int radius) throws Exception{
+			final RandomAccessibleInterval<IntType> labelledimage, int framenumber) throws Exception{
 		final int ndims = blobimage.numDimensions();
 		final int Maxlabel = Watersheddding.GetMaxlabelsseeded(labelledimage);
 		ArrayList<Staticproperties> staticprops = new ArrayList<Staticproperties>(ndims);
@@ -44,17 +44,18 @@ public class Segmentbywatershed {
 		
 			final Getobjectproperties props = new Getobjectproperties(outimg, labelledimage);
 		
-		final Objprop Refinedobjectproperties = props.GetRefinedobjectprops(label, radius);
+		final Objprop Refinedobjectproperties = props.GetRefinedobjectprops(label);
+		
 
 		final Staticproperties statprops = new Staticproperties(label, framenumber,
 				Refinedobjectproperties.location,
 				Refinedobjectproperties.sigma,
+				Refinedobjectproperties.corr,
 				Refinedobjectproperties.diameter,
 				Refinedobjectproperties.totalintensity);
 
 		// System.out.println(label + " " + estimatedDiameter );
 		staticprops.add(statprops);
-		
 		}
 		
 		return staticprops;

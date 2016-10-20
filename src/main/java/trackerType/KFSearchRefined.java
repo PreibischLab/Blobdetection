@@ -27,7 +27,7 @@ import graphconstructs.Logger;
 import ij.ImagePlus;
 import segmentBlobs.Staticproperties;
 
-public class KFsearch implements Blob {
+public class KFSearchRefined implements Blob {
 
 	private static final double ALTERNATIVE_COST_FACTOR = 1.05d;
 
@@ -50,7 +50,7 @@ public class KFsearch implements Blob {
 	protected Logger logger = Logger.DEFAULT_LOGGER;
 	protected String errorMessage;
 
-	public KFsearch(final ArrayList<ArrayList<Staticproperties>> Allblobs,
+	public KFSearchRefined(final ArrayList<ArrayList<Staticproperties>> Allblobs,
 			final CostFunction<Staticproperties, Staticproperties> UserchosenCostFunction, final double maxsearchRadius,
 			final double initialsearchRadius, final int maxframe, final int maxframeGap) {
 		this.Allblobs = Allblobs;
@@ -139,7 +139,7 @@ public class KFsearch implements Blob {
 		double meanSpotRadius = 0d;
 		for (final Staticproperties Blob : Secondorphan) {
 			
-			meanSpotRadius += Blob.maxextent / 2;
+			meanSpotRadius += Math.max(Blob.sigma[0], Blob.sigma[1]);
 		}
 		meanSpotRadius /= Secondorphan.size();
 		final double positionMeasurementStd = meanSpotRadius / 10d;

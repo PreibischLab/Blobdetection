@@ -59,9 +59,8 @@ public class TrackblobsNNsearchGauss {
 			
 			// To get Blobs via LM fit and Gaussian detection, comment the two
 			// lines below if using DoG detection
-			final int maxDiameter = 100;
 			ArrayList<Staticproperties> Spotmaxbase = Makebloblist.returnRefinedBloblist(currentframe, currentframepre,
-					i, maxDiameter);
+					i);
 
 			Allspots.add(i, Spotmaxbase);
 			System.out.println("Finding blobs in Frame: " + i);

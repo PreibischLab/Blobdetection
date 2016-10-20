@@ -86,20 +86,25 @@ public class Getobjectproperties {
 	}
 	
 	
-	public Objprop GetRefinedobjectprops(int currentlabel, int radius) throws Exception {
+	public Objprop GetRefinedobjectprops(int currentlabel) throws Exception {
 		
 		Point pos = GetLocalmaxmin.computeMaxinLabel(inputimg, labelledimg, currentlabel);
 		
-		GaussianPointfitter  MTlength = new GaussianPointfitter(inputimg, labelledimg);
+		 
 		
-		double[] final_param  = MTlength.Getfinalparam(pos, radius);
+		
+		GaussianPointfitter  MTlength = new GaussianPointfitter(inputimg, labelledimg, currentlabel);
+		
+		double[] final_param  = MTlength.Getfinalparam(pos);
 		
         final double[] location = {final_param[1], final_param[2]};
 		final double[] sigma = {1.0 / Math.sqrt(final_param[3]), 1.0 / Math.sqrt(final_param[4])};
+		final double corr = final_param[5];
 		final double totalintensity = final_param[0];
 		final double diameter = 0.5 * (sigma[0] + sigma[1]);
-		final Objprop props = new Objprop(currentlabel,diameter, location, sigma, totalintensity);
+		final Objprop props = new Objprop(currentlabel,diameter, location, sigma, corr, totalintensity);
 		return props;
+		
 		
 	}
 

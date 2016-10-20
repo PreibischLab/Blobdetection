@@ -12,6 +12,7 @@ public final class Staticproperties  implements RealLocalizable, Comparable< Sta
 		public  double[] location;
 		public double[] sigma;
 		public  double Intensity;
+		public double corr;
 		
 		// Parameter for the cost function to decide how much weight to give to Intensity and to distance
 		/*
@@ -54,13 +55,15 @@ public final class Staticproperties  implements RealLocalizable, Comparable< Sta
 		 *            Intensity of the Blob in image units
 		 */
 		
-		public Staticproperties(final int Label, final int currentframe,  final double[] location,final double[] sigma, final double maxextent,
+		public Staticproperties(final int Label, final int currentframe,  final double[] location,final double[] sigma, final double corr,
+				final double maxextent,
 				final double Intensity) {
 			this.currentframe = currentframe;
 			this.sigma = sigma;
 			this.location = location;
 			this.Intensity = Intensity;
 			this.maxextent = maxextent;
+			this.corr = corr;
 
 		}
 		
@@ -86,13 +89,13 @@ public final class Staticproperties  implements RealLocalizable, Comparable< Sta
 		}
 		
 		
-		public Staticproperties(final int currentframe,  final double[] location,final double[] sigma,
+		public Staticproperties(final int currentframe,  final double[] location,final double[] sigma, double corr,
 				final double Intensity) {
 			this.currentframe = currentframe;
 			this.sigma = sigma;
 			this.location = location;
 			this.Intensity = Intensity;
-			
+			this.corr = corr;
 
 		}
 		/**
