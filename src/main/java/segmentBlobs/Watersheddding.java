@@ -35,13 +35,12 @@ public class Watersheddding {
 	}
 
 	public static RandomAccessibleInterval<IntType> Dowatersheddingonly(
-			final RandomAccessibleInterval<FloatType> biginputimg, final boolean softThreshold) {
+			final RandomAccessibleInterval<FloatType> biginputimg) {
 
 		// Perform the distance transform
 		final Img<FloatType> distimg = new ArrayImgFactory<FloatType>().create(biginputimg, new FloatType());
 
-		RandomAccessibleInterval<BitType> bitimg = DistanceTransformImage(biginputimg, distimg, InverseType.Straight,
-				softThreshold);
+		RandomAccessibleInterval<BitType> bitimg = DistanceTransformImage(biginputimg, distimg, InverseType.Straight);
 
 		// Prepare seed image for watershedding
 		NativeImgLabeling<Integer, IntType> oldseedLabeling = new NativeImgLabeling<Integer, IntType>(
@@ -60,7 +59,7 @@ public class Watersheddding {
 	}
 
 	public static RandomAccessibleInterval<BitType> DistanceTransformImage(RandomAccessibleInterval<FloatType> inputimg,
-			RandomAccessibleInterval<FloatType> outimg, final InverseType invtype, final boolean softThreshold) {
+			RandomAccessibleInterval<FloatType> outimg, final InverseType invtype) {
 		int n = inputimg.numDimensions();
 
 		final Img<BitType> bitimg = new ArrayImgFactory<BitType>().create(inputimg, new BitType());
@@ -71,8 +70,7 @@ public class Watersheddding {
 
 		Float val = new Float(threshold);
 
-		if (softThreshold)
-			val = new Float(0.1 * threshold);
+		
 
 		GetLocalmaxmin.ThresholdingBit(inputimg, bitimg, val);
 

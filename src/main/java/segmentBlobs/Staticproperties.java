@@ -10,6 +10,7 @@ public final class Staticproperties  implements RealLocalizable, Comparable< Sta
 		public  double maxextent;
 		public int currentframe;
 		public  double[] location;
+		public double[] sigma;
 		public  double Intensity;
 		
 		// Parameter for the cost function to decide how much weight to give to Intensity and to distance
@@ -40,6 +41,28 @@ public final class Staticproperties  implements RealLocalizable, Comparable< Sta
 
 		}
 		
+		/**
+		 * Creates a new Blob.
+		 *
+		 * @param Label
+		 *            the watershed Label to which the Blob belongs to.
+		 * @param maxextent
+		 *            Estimated diameter of the Blob, estimated via putting rings of increasing radii, in image units.
+		 * @param location[]
+		 *            DoG detected location of the Blob, in image units.
+		 * @param Intensity
+		 *            Intensity of the Blob in image units
+		 */
+		
+		public Staticproperties(final int Label, final int currentframe,  final double[] location,final double[] sigma, final double maxextent,
+				final double Intensity) {
+			this.currentframe = currentframe;
+			this.sigma = sigma;
+			this.location = location;
+			this.Intensity = Intensity;
+			this.maxextent = maxextent;
+
+		}
 		
 		/**
 		 * Creates a new Blob.
@@ -62,6 +85,16 @@ public final class Staticproperties  implements RealLocalizable, Comparable< Sta
 
 		}
 		
+		
+		public Staticproperties(final int currentframe,  final double[] location,final double[] sigma,
+				final double Intensity) {
+			this.currentframe = currentframe;
+			this.sigma = sigma;
+			this.location = location;
+			this.Intensity = Intensity;
+			
+
+		}
 		/**
 		 * Creates a new Blob.
 		 *

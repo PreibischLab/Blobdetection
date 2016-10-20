@@ -31,17 +31,17 @@ import preProcessingTools.MedianFilter2D;
 import segmentBlobs.Staticproperties;
 import trackerType.KFsearch;
 
-public class Trackblobs {
+public class TrackblobsKFGauss {
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
 
 		new ImageJ();
 
 		// Load the stack of images
 		final RandomAccessibleInterval<FloatType> img = util.ImgLib2Util.openAs32Bit(
-				new File("/Users/varunkapoor/Documents/Pierre_data/Recording_Cell_Culture_Kapoor/mCherry_ShortET_duplicate.tif"),
+				new File(
+						"/Users/varunkapoor/Documents/Pierre_data/Recording_Cell_Culture_Kapoor/mCherry_ShortET-secdup-short.tif"),
 				new ArrayImgFactory<FloatType>());
-
 
 		int ndims = img.numDimensions();
 		new Normalize();
@@ -52,81 +52,55 @@ public class Trackblobs {
 
 		ImagePlus imp = ImageJFunctions.show(img);
 		ImagePlus impcopy = ImageJFunctions.show(img);
-		
-		
 
 		
-		final boolean softThreshold = false;
-		// Noisye: 15stackimage.tif
-		// Highly Noisy: ../res/15HighNoisyblobs.tif
-		// ../res/C1-test-pre.tif
-		// Actual data
-		// /Users/varunkapoor/Documents/Pierre_data/Latest_video/mCherry_ShortET-brightnessadjust.tif
-		// /Users/varunkapoor/Documents/Pierre_data/Latest_video/mCherry_ShortET.tif
-		// Display stack
-		// ImageJFunctions.show(img);
+		// Cost function
+		/**
+		 * Choose one of the cost functions
+		 */
+		// Distance based Cost function (uncomment the method if has to be used)
 
-		
-		final int minDiameter = 2;
-		final int maxDiameter= 50;
-		
-		
-		final double[] calibration = { imp.getCalibration().pixelWidth, imp.getCalibration().pixelHeight,
-				imp.getCalibration().pixelDepth };
-		// Cost function 
-      /**
-      * Choose one of the cost functions 
-      */
-				// Distance based Cost function (uncomment the method if has to be used)
+		final CostFunction<Staticproperties, Staticproperties> DistCostFunction = new SquareDistCostFunction();
 
-				final CostFunction<Staticproperties, Staticproperties> DistCostFunction = new SquareDistCostFunction();
+		// Intensity based Cost function (Comment out the method if previous
+		// method is being used)
+		final CostFunction<Staticproperties, Staticproperties> IntensityCostFunction = new IntensityDiffCostFunction();
 
-				// Intensity based Cost function (Comment out the method if previous
-				// method is being used)
-				final CostFunction<Staticproperties, Staticproperties> IntensityCostFunction = new IntensityDiffCostFunction();
-				
-				
 		final int maxframe = (int) img.dimension(ndims - 1);
 		ArrayList<ArrayList<Staticproperties>> Allspots = new ArrayList<ArrayList<Staticproperties>>();
 
-		
-	
 		for (int i = 0; i < maxframe; ++i) {
 			IntervalView<FloatType> currentframe = Views.hyperSlice(img, ndims - 1, i);
-			
-			final MedianFilter2D<FloatType> medfilter = new MedianFilter2D<FloatType>( currentframe, 1);
+
+			final MedianFilter2D<FloatType> medfilter = new MedianFilter2D<FloatType>(currentframe, 1);
 			medfilter.process();
 			final RandomAccessibleInterval<FloatType> inputimg = medfilter.getResult();
 			RandomAccessibleInterval<FloatType> preprocessedimg = Kernels.Supressthresh(inputimg);
 			Normalize.normalize(Views.iterable(preprocessedimg), minval, maxval);
-			
+
 			RandomAccessibleInterval<FloatType> currentframepre = preprocessedimg;
 
-			ArrayList<Staticproperties> Spotmaxbase = Makebloblist.returnBloblist(currentframe, currentframepre,
-					minDiameter, maxDiameter, calibration, i, softThreshold);
+			// To get Blobs via LM fit and Gaussian detection, comment the two
+			// lines below if using DoG detection
+			final int maxDiameter = 100;
+			ArrayList<Staticproperties> Spotmaxbase = Makebloblist.returnRefinedBloblist(currentframe, currentframepre,
+					i, maxDiameter);
+
 			Allspots.add(i, Spotmaxbase);
 			System.out.println("Finding blobs in Frame: " + i);
 			System.out.println("Total number of Blobs found: " + Spotmaxbase.size());
 		}
 
-		// Either perform Nearest Neighbour tracking or Kalman Filter tracking
-		/*
-		 * // Create an object for NN search final double maxsqdistance = 1000;
-		 * NNsearch NNsearchsimple = new NNsearch(Allspots, maxsqdistance,
-		 * img.dimension(ndims - 1) ); NNsearchsimple.process();
-		 * SimpleWeightedGraph<Staticproperties, DefaultWeightedEdge> graph =
-		 * NNsearchsimple.getResult(); System.out.println(
-		 * "NN search process done");
-		 */
 		// Create an object for Kalman Filter tracking
-		// Initial search radius as maximal distance allowed for initial search to initiate the Kalman Filter tracks
+		// Initial search radius as maximal distance allowed for initial search
+		// to initiate the Kalman Filter tracks
 		final int initialSearchradius = 50;
 		// For linking costs, this is how far we allow for the blob to move
 		final int maxSearchradius = 15;
 		final int missedframes = 20;
 
-		KFsearch KFsimple = new KFsearch(Allspots, DistCostFunction, initialSearchradius, maxSearchradius, (int) img.dimension(ndims - 1),
-				missedframes);
+		KFsearch KFsimple = new KFsearch(Allspots, DistCostFunction, initialSearchradius, maxSearchradius,
+				(int) img.dimension(ndims - 1), missedframes);
 		KFsimple.process();
 		System.out.println("KF search process done");
 		ArrayList<Subgraphs> subgraph = KFsimple.getFramedgraph();
@@ -141,7 +115,8 @@ public class Trackblobs {
 
 		RandomAccessibleInterval<FloatType> detimg = new ArrayImgFactory<FloatType>().create(img, new FloatType());
 
-		DisplayBlobs.Displaydetection(detimg, frameandblob);
+		// Display Blobs if using Gaussian detection
+		DisplayBlobs.DisplayRefineddetection(detimg, frameandblob);
 
 		Normalize.normalize(Views.iterable(detimg), minval, maxval);
 		ImageJFunctions.show(detimg);

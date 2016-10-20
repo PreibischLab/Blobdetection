@@ -37,8 +37,8 @@ public class DisplayBlobs {
 					IntervalView<FloatType> groundframe = Views.hyperSlice(img, ndims - 1, currentframe);
 					AddGaussian.addGaussian(groundframe, frameandblob.get(index).Blobs.Intensity,
 							frameandblob.get(index).Blobs.location,
-							new double[] { frameandblob.get(index).Blobs.maxextent ,
-									frameandblob.get(index).Blobs.maxextent  });
+							new double[] { 2 *frameandblob.get(index).Blobs.maxextent ,
+									2 *frameandblob.get(index).Blobs.maxextent  });
 
 				}
 
@@ -49,6 +49,32 @@ public class DisplayBlobs {
 	}
 	
 	
+	public static void DisplayRefineddetection(RandomAccessibleInterval<FloatType> img, ArrayList<FramedBlob> frameandblob) {
+
+
+		int ndims = img.numDimensions();
+
+			
+
+			for (int index = 0; index < frameandblob.size(); ++index) {
+
+				int currentframe = frameandblob.get(index).frame;
+
+				if (frameandblob.get(index).frame == currentframe ) {
+					IntervalView<FloatType> groundframe = Views.hyperSlice(img, ndims - 1, currentframe);
+					AddGaussian.addGaussian(groundframe, frameandblob.get(index).Blobs.Intensity,
+							frameandblob.get(index).Blobs.location,
+							new double[] { frameandblob.get(index).Blobs.sigma[0] ,
+									frameandblob.get(index).Blobs.sigma[1]  });
+					
+System.out.println(frameandblob.get(index).Blobs.sigma[0] + " " + frameandblob.get(index).Blobs.sigma[1]);
+				}
+
+			
+
+		}
+
+	}
 	
 	
 

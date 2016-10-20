@@ -93,7 +93,7 @@ public ImagePlus getImp() { return this.imp; }
 			
 			
 			final FileSaver savestart = new FileSaver(imp);
-			savestart.saveAsJpeg("TrackBlob_subgraph"+arg0.getCurrentSlice());
+			savestart.saveAsJpeg("mCherry_subgraph"+arg0.getCurrentSlice());
 			
 			System.out.println( arg0.getCurrentSlice() );
 		}		

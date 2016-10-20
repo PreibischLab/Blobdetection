@@ -7,6 +7,7 @@ import java.util.Iterator;
 import com.sun.tools.javac.util.Pair;
 
 import blobObjects.Objprop;
+import gaussianFits.GaussianPointfitter;
 import ij.ImageJ;
 import net.imglib2.Cursor;
 import net.imglib2.Interval;
@@ -28,7 +29,6 @@ import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Intervals;
 import net.imglib2.util.RealSum;
 import net.imglib2.view.Views;
-
 import util.ImgLib2Util;
 
 @SuppressWarnings("deprecation")
@@ -37,11 +37,11 @@ public class Getobjectproperties {
 	// This class computes the min and max bounds of a labelled space and
 	// returns the maxextent between these co-ordinates
 
-	private final RandomAccessibleInterval<FloatType> inputimg;
-	private final RandomAccessibleInterval<IntType> labelledimg;
-	private final int ndims;
-	private final int minRadius;
-	private final int maxRadius;
+	private  RandomAccessibleInterval<FloatType> inputimg;
+	private  RandomAccessibleInterval<IntType> labelledimg;
+	private  int ndims;
+	private  int minRadius;
+	private  int maxRadius;
 
 	public Getobjectproperties(final RandomAccessibleInterval<FloatType> inputimg,
 			final RandomAccessibleInterval<IntType> labelledimg, final int minRadius, final int maxRadius) {
@@ -51,6 +51,15 @@ public class Getobjectproperties {
 		this.minRadius = minRadius;
 		this.maxRadius = maxRadius;
 
+	}
+	
+	public Getobjectproperties(final RandomAccessibleInterval<FloatType> inputimg,
+			final RandomAccessibleInterval<IntType> labelledimg){
+		
+		this.inputimg = inputimg;
+		this.labelledimg = labelledimg;
+		this.ndims = inputimg.numDimensions();
+		
 	}
 
 	// Once we have the label we get bounding box (BB for each of the labels, we
@@ -74,6 +83,24 @@ public class Getobjectproperties {
 
 		return props;
 
+	}
+	
+	
+	public Objprop GetRefinedobjectprops(int currentlabel, int radius) throws Exception {
+		
+		Point pos = GetLocalmaxmin.computeMaxinLabel(inputimg, labelledimg, currentlabel);
+		
+		GaussianPointfitter  MTlength = new GaussianPointfitter(inputimg, labelledimg);
+		
+		double[] final_param  = MTlength.Getfinalparam(pos, radius);
+		
+        final double[] location = {final_param[1], final_param[2]};
+		final double[] sigma = {1.0 / Math.sqrt(final_param[3]), 1.0 / Math.sqrt(final_param[4])};
+		final double totalintensity = final_param[0];
+		final double diameter = 0.5 * (sigma[0] + sigma[1]);
+		final Objprop props = new Objprop(currentlabel,diameter, location, sigma, totalintensity);
+		return props;
+		
 	}
 
 	public Objprop Improveobjectprops(RealLocalizable realpos, int currentlabel) {

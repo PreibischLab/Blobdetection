@@ -12,38 +12,49 @@ import segmentBlobs.Staticproperties;
 
 public class Makebloblist {
 
-	
-	public static ArrayList<Staticproperties> returnBloblist(final IntervalView<FloatType> baseframe, 
-			RandomAccessibleInterval<FloatType> preinputimg, final int minDiameter, final int maxDiameter, final double[] calibration, int framenumber,  final boolean softThreshold){
-		
+	public static ArrayList<Staticproperties> returnBloblist(final IntervalView<FloatType> baseframe,
+			RandomAccessibleInterval<FloatType> preinputimg, final int minDiameter, final int maxDiameter,
+			final double[] calibration, int framenumber) {
+
 		RandomAccessibleInterval<IntType> labelledimagebase = new ArrayImgFactory<IntType>().create(baseframe,
 				new IntType());
 
-	
 		// Segmenting the image via watershed
-		labelledimagebase = segmentBlobs.Segmentbywatershed.getsegmentedimage(preinputimg, softThreshold);
-		
+		labelledimagebase = segmentBlobs.Segmentbywatershed.getsegmentedimage(preinputimg);
+
 		// List containing all the maximas in baseframe
 		ArrayList<Staticproperties> Spotmaxbase = segmentBlobs.Segmentbywatershed.DoGdetection(baseframe,
-				labelledimagebase, minDiameter, maxDiameter, calibration, framenumber, softThreshold);
-		
-		
+				labelledimagebase, minDiameter, maxDiameter, calibration, framenumber);
+
 		return Spotmaxbase;
 	}
-	
-	
-	
-	public static void remove( final Staticproperties spot, final ArrayList<ArrayList<Staticproperties>> blobsinframe, final Integer frame )
-	{
-		
-		 blobsinframe.get(frame).remove( spot );
+
+	public static ArrayList<Staticproperties> returnRefinedBloblist(final IntervalView<FloatType> baseframe,
+			RandomAccessibleInterval<FloatType> preinputimg, int framenumber, int radius) throws Exception {
+
+		RandomAccessibleInterval<IntType> labelledimagebase = new ArrayImgFactory<IntType>().create(baseframe,
+				new IntType());
+
+		// Segmenting the image via watershed
+		labelledimagebase = segmentBlobs.Segmentbywatershed.getsegmentedimage(preinputimg);
+
+		// Refined List containing all the maximas in baseframe
+		ArrayList<Staticproperties> Spotmaxbase = segmentBlobs.Segmentbywatershed.Gaussdetection(baseframe,
+				labelledimagebase, framenumber, radius);
+		return Spotmaxbase;
+
 	}
-	
-	public static void add( final Staticproperties spot, final ArrayList<ArrayList<Staticproperties>> blobsinframe, final Integer frame )
-	{
-		
-		 blobsinframe.get(frame).add( spot );
+
+	public static void remove(final Staticproperties spot, final ArrayList<ArrayList<Staticproperties>> blobsinframe,
+			final Integer frame) {
+
+		blobsinframe.get(frame).remove(spot);
 	}
-	
-	
+
+	public static void add(final Staticproperties spot, final ArrayList<ArrayList<Staticproperties>> blobsinframe,
+			final Integer frame) {
+
+		blobsinframe.get(frame).add(spot);
+	}
+
 }

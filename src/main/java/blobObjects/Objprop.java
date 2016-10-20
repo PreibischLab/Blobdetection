@@ -3,9 +3,11 @@ package blobObjects;
 	
 	public final class Objprop {
 
-        public final int Label;
-		public final double diameter;
-		public final double totalintensity;
+        public  int Label;
+		public  double diameter;
+		public double[] sigma;
+		public  double totalintensity;
+		public double[] location;
 	
 
 		public Objprop(final int Label, final double diameter,final double totalintensity) {
@@ -15,6 +17,21 @@ package blobObjects;
 			
 
 		}
+		
+		public Objprop(final int Label, final double diameter, final double[] location, final double[] sigma, final double totalintensity){
+			
+			this.Label = Label;
+			this.sigma = sigma;
+			this.totalintensity = totalintensity;
+			this.location = location;
+			this.diameter = diameter;
+			
+			
+			
+		}
+		
+		
+		
 	}
 
 
