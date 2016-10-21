@@ -56,19 +56,22 @@ public class DisplayBlobs {
 
 			
 
-			for (int index = 0; index < frameandblob.size(); ++index) {
+			for (int index = 0; index < frameandblob.size() - 1; ++index) {
 
 				int currentframe = frameandblob.get(index).frame;
 
-				if (frameandblob.get(index).frame == currentframe ) {
+				
 					IntervalView<FloatType> groundframe = Views.hyperSlice(img, ndims - 1, currentframe);
-					AddGaussian.add2DGaussian(groundframe, frameandblob.get(index).Blobs.Intensity,
+					AddGaussian.add2DGaussian(groundframe, 
+							frameandblob.get(index).Blobs.Intensity,
 							frameandblob.get(index).Blobs.location,
-							new double[] { frameandblob.get(index).Blobs.sigma[0] ,
-									frameandblob.get(index).Blobs.sigma[1]  }, frameandblob.get(index).Blobs.corr);
+							frameandblob.get(index).Blobs.sigma ,
+							frameandblob.get(index).Blobs.corr
+							);
 					
-				}
+				
 
+			//	System.out.println(frameandblob.get(index).Blobs.Intensity);
 
 		}
 

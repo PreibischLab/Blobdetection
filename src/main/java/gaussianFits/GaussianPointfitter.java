@@ -67,7 +67,7 @@ public class GaussianPointfitter {
 				C /= I_sum;
 				start_param[ndims + j + 1] = 1 / C;
 			}
-			start_param[2 * ndims + 1] = 0.5;
+			start_param[2 * ndims + 1] = 0;
 			start_param[2 * ndims + 2] = 0;
 
 			return start_param;
@@ -138,7 +138,8 @@ public class GaussianPointfitter {
 				final long[] minCorner = Watersheddding.GetMincorners(intimg, currentlabel);
 				final long[] maxCorner = Watersheddding.GetMaxcorners(intimg, currentlabel);
 				
-				int radius = (int) Distance(minCorner, maxCorner) / 8;
+				int radius = Math.min(30,(int) Distance(minCorner, maxCorner) / 8);
+				
 				RandomAccess<FloatType> ranac = inputimg.randomAccess();
 
 				ranac.setPosition(point);

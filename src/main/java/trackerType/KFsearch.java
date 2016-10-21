@@ -139,7 +139,7 @@ public class KFsearch implements Blob {
 		double meanSpotRadius = 0d;
 		for (final Staticproperties Blob : Secondorphan) {
 			
-			meanSpotRadius += Blob.maxextent / 2;
+			meanSpotRadius += Blob.maxextent ;
 		}
 		meanSpotRadius /= Secondorphan.size();
 		final double positionMeasurementStd = meanSpotRadius / 10d;

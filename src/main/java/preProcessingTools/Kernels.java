@@ -424,7 +424,9 @@ public static void addBackground(final IterableInterval<FloatType> iterable, fin
 		//Supress values below the low threshold
 		int n = inputimg.numDimensions();
 		double[] position = new double[n];
-				final Float Lowthreshold = GlobalThresholding.AutomaticThresholding(inputimg);
+				final Float val = GlobalThresholding.AutomaticThresholding(inputimg);
+				final Float Lowthreshold = new Float( 0.1 * val);
+				
 				Cursor<FloatType> inputcursor = Views.iterable(inputimg).localizingCursor();
 				RandomAccess<FloatType> outputran = Threshimg.randomAccess();
 				final double[] sigma = { 1, 1 };

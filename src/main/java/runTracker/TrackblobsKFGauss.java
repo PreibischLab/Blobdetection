@@ -41,7 +41,7 @@ public class TrackblobsKFGauss {
 		// Load the stack of images
 		final RandomAccessibleInterval<FloatType> img = util.ImgLib2Util.openAs32Bit(
 				new File(
-						"/Users/varunkapoor/Documents/Pierre_data/Recording_Cell_Culture_Kapoor/mCherry_ShortET-secdup-test.tif"),
+						"/Users/varunkapoor/Documents/Pierre_data/Recording_Cell_Culture_Kapoor/mCherry_ShortET-secdup-short.tif"),
 				new ArrayImgFactory<FloatType>());
 
 		int ndims = img.numDimensions();
@@ -76,7 +76,7 @@ public class TrackblobsKFGauss {
 			final MedianFilter2D<FloatType> medfilter = new MedianFilter2D<FloatType>(currentframe, 1);
 			medfilter.process();
 			final RandomAccessibleInterval<FloatType> inputimg = medfilter.getResult();
-			RandomAccessibleInterval<FloatType> preprocessedimg = Kernels.Supressthresh(inputimg);
+			RandomAccessibleInterval<FloatType> preprocessedimg = inputimg; //Kernels.Supressthresh(inputimg);
 			Normalize.normalize(Views.iterable(preprocessedimg), minval, maxval);
 
 			RandomAccessibleInterval<FloatType> currentframepre = preprocessedimg;
@@ -86,7 +86,7 @@ public class TrackblobsKFGauss {
 			ArrayList<Staticproperties> Spotmaxbase = Makebloblist.returnRefinedBloblist(currentframe, currentframepre,
 					i);
 
-			Allspots.add(i, Spotmaxbase);
+			Allspots.add(Spotmaxbase);
 			System.out.println("Finding blobs in Frame: " + i);
 			System.out.println("Total number of Blobs found: " + Spotmaxbase.size());
 		}
@@ -94,9 +94,9 @@ public class TrackblobsKFGauss {
 		// Create an object for Kalman Filter tracking
 		// Initial search radius as maximal distance allowed for initial search
 		// to initiate the Kalman Filter tracks
-		final int initialSearchradius = 50;
+		final int initialSearchradius = 30;
 		// For linking costs, this is how far we allow for the blob to move
-		final int maxSearchradius = 15;
+		final int maxSearchradius = 10;
 		final int missedframes = 20;
 
 		KFSearchRefined KFsimple = new KFSearchRefined(Allspots, DistCostFunction, initialSearchradius, maxSearchradius,

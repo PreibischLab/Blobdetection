@@ -51,10 +51,11 @@ public class Segmentbywatershed {
 				Refinedobjectproperties.location,
 				Refinedobjectproperties.sigma,
 				Refinedobjectproperties.corr,
+				Refinedobjectproperties.noise,
 				Refinedobjectproperties.diameter,
 				Refinedobjectproperties.totalintensity);
 
-		// System.out.println(label + " " + estimatedDiameter );
+		// System.out.println(label + " " + Refinedobjectproperties.totalintensity );
 		staticprops.add(statprops);
 		}
 		

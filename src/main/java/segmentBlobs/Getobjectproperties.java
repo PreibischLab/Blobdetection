@@ -102,7 +102,8 @@ public class Getobjectproperties {
 		final double corr = final_param[5];
 		final double totalintensity = final_param[0];
 		final double diameter = 0.5 * (sigma[0] + sigma[1]);
-		final Objprop props = new Objprop(currentlabel,diameter, location, sigma, corr, totalintensity);
+		final double noise = final_param[6];
+		final Objprop props = new Objprop(currentlabel,diameter, location, sigma, corr, noise, totalintensity);
 		return props;
 		
 		

@@ -9,6 +9,7 @@ package blobObjects;
 		public  double totalintensity;
 		public double[] location;
 		public double corr;
+		public double noise;
 	
 
 		public Objprop(final int Label, final double diameter,final double totalintensity) {
@@ -19,7 +20,7 @@ package blobObjects;
 
 		}
 		
-		public Objprop(final int Label, final double diameter, final double[] location, final double[] sigma, final double corr,
+		public Objprop(final int Label, final double diameter, final double[] location, final double[] sigma, final double corr, final double noise,
 				final double totalintensity){
 			
 			this.Label = Label;
@@ -28,6 +29,7 @@ package blobObjects;
 			this.location = location;
 			this.diameter = diameter;
 			this.corr = corr;
+			this.noise = noise;
 			
 			
 			

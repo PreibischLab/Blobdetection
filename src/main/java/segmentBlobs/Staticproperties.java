@@ -56,6 +56,7 @@ public final class Staticproperties  implements RealLocalizable, Comparable< Sta
 		 */
 		
 		public Staticproperties(final int Label, final int currentframe,  final double[] location,final double[] sigma, final double corr,
+				final double noise,
 				final double maxextent,
 				final double Intensity) {
 			this.currentframe = currentframe;

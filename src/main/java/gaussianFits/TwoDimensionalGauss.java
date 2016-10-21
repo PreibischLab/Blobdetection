@@ -33,34 +33,36 @@ public class TwoDimensionalGauss implements FitFunction {
 			double corrxy = a[2 * ndims + 1];
 			if (k == 0) {
 				// With respect to A
-				return E(x, a);
+				return E(x, a) ;
 
 			} 
 			else if (k == 1){
 				
-				return     (2 * corrxx * dx - corrxy * dy * Math.sqrt(corrxx * corryy)) * a[0]  * E(x, a);
+				return     (2 * corrxx * dx - corrxy * dy * Math.sqrt(corrxx * corryy)) * a[0]  * E(x, a) ;
 			}
 			
             else if (k == 2){
 				
-				return     (2 * corryy * dy - corrxy * dx * Math.sqrt(corrxx * corryy)) * a[0]  * E(x, a);
+				return     (2 * corryy * dy - corrxy * dx * Math.sqrt(corrxx * corryy)) * a[0]  * E(x, a) ;
 			}
 			
             else if (k == 3){
             	
-            	return -(dx * dx - (0.5/Math.sqrt(corrxx)) *  dx * dy * corrxy * Math.sqrt(corryy) ) * a[0] * E(x, a);
+            	return   -(dx * dx - (0.5/Math.sqrt(corrxx)) *   dx * dy * corrxy * Math.sqrt(corryy) ) 
+            			* a[0] * E(x, a) ;
             }
             else if (k == 4){
             	
-            	return -(dy * dy - (0.5/Math.sqrt(corryy)) *  dx * dy * corrxy * Math.sqrt(corrxx) ) * a[0] * E(x, a);
+            	return 
+            			-(dy * dy - (0.5/Math.sqrt(corryy)) *  dx * dy * corrxy * Math.sqrt(corrxx) ) 
+            			* a[0] * E(x, a) ;
             }
 			
             else if (k == 5){
             	
-            	return dx * dy * Math.sqrt(corrxx * corryy) * a[0] * E(x, a);
+            	return (  dx * dy * Math.sqrt(corrxx * corryy))* a[0] * E(x, a);
+            
             }
-            
-            
 			else{
 				
 				return 1.0;
@@ -87,7 +89,7 @@ public class TwoDimensionalGauss implements FitFunction {
 			sum = corrxx * dx * dx + corryy * dy * dy -  corrxy*dx *dy *Math.sqrt(corrxx * corryy);
 			
 			
-			return Math.exp(-sum/(1 + corrxy * corrxy ));
+			return Math.exp(-sum);
 		}
 		
 
