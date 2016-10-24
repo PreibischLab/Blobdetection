@@ -124,8 +124,8 @@ public class GaussianPointfitter {
 				}
 				
 
-
 				return finalparam;
+               
 				
 
 			}

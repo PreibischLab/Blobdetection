@@ -125,11 +125,13 @@ public class AddGaussian {
 	{
 	cursor.fwd();
 
+	double value = Amplitude;
 	final double x = location[0] - cursor.getIntPosition(0);
 	final double y = location[1] - cursor.getIntPosition(1);
-	double  value =(Math.exp( -(x * x) / (sigma[ 0 ] *sigma[ 0 ] ) -(y * y) / (sigma[ 1 ] *sigma[ 1 ] ) + corr *x * y /(sigma[0] * sigma[1]) ) ) ;
+	value *=Math.exp( -(x * x) / (sigma[ 0 ] *sigma[ 0 ] ) - (y * y) / (sigma[ 1 ] *sigma[ 1 ] ) 
+			+ (corr * x * y) /(sigma[ 0 ] * sigma[ 1 ]) )  ;
 	
-	cursor.get().set( cursor.get().get() +  (float)(Amplitude * value) );
+	cursor.get().set( cursor.get().get() +  (float)value );
 	
 	
 	}

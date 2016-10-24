@@ -50,7 +50,7 @@ package segmentBlobs;
 			}
 			
 
-			return ThresholdNew;
+			return (float)ThresholdNew;
 
 		}
 

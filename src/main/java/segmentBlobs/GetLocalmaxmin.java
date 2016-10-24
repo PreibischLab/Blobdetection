@@ -118,7 +118,7 @@ import ij.ImageJ;
 				bound.fwd();
 
 				outbound.setPosition(bound);
-	        if (bound.get().get()>ThresholdValue){
+	        if (bound.get().get()>=ThresholdValue){
 //				if (bound.get().compareTo(ThresholdValue) > 0) {
 
 					bound.localize(backpos);

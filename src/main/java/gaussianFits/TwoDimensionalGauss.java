@@ -78,7 +78,6 @@ public class TwoDimensionalGauss implements FitFunction {
 		private static final double E(final double[] x, final double[] a) {
 			final int ndims = x.length;
 			double sum = 0;
-			double di;
 			
 			double dx = x[0] - a[1];
 			double dy = x[1] - a[2];
@@ -86,7 +85,7 @@ public class TwoDimensionalGauss implements FitFunction {
 			double corryy = a[ndims + 2];
 			double corrxy = a[2 * ndims + 1];
 			
-			sum = corrxx * dx * dx + corryy * dy * dy -  corrxy*dx *dy *Math.sqrt(corrxx * corryy);
+			sum = corrxx * dx * dx + corryy * dy * dy -  corrxy * dx * dy * Math.sqrt(corrxx * corryy);
 			
 			
 			return Math.exp(-sum);

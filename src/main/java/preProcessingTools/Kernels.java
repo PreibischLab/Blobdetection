@@ -1,81 +1,86 @@
 package preProcessingTools;
 
-
-
 import java.util.Random;
 
+import fftMethods.FFTConvolution;
 import net.imglib2.Cursor;
+import net.imglib2.FinalInterval;
 import net.imglib2.IterableInterval;
+import net.imglib2.Localizable;
+import net.imglib2.Point;
+import net.imglib2.PointSampleList;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
-//import net.imglib2.algorithm.fft2.FFTConvolution;
+import net.imglib2.RealCursor;
+import net.imglib2.RealLocalizable;
+import net.imglib2.RealPoint;
+import net.imglib2.RealPointSampleList;
+import net.imglib2.algorithm.MultiThreaded;
+import net.imglib2.algorithm.MultiThreadedAlgorithm;
 import net.imglib2.algorithm.region.hypersphere.HyperSphere;
 import net.imglib2.algorithm.region.hypersphere.HyperSphereCursor;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.array.ArrayImgs;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.type.logic.BitType;
 import net.imglib2.type.numeric.complex.ComplexFloatType;
+import net.imglib2.type.numeric.integer.IntType;
+import net.imglib2.type.numeric.integer.UnsignedShortType;
+import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 import segmentBlobs.GlobalThresholding;
-import target.classes.net.imglib2.algorithm.fft2.FFTConvolution;
+import segmentBlobs.Watersheddding;
+
 
 public class Kernels {
 
-	
 	public static enum ProcessingType {
 		Horizontaledge, Verticaledge, Gradientmag, NaiveEdge, Meanfilter, SupressThresh, CannyEdge
 	}
-	      // Any preprocessing
+	// Any preprocessing
 
-			public static RandomAccessibleInterval<FloatType> Preprocess(final RandomAccessibleInterval<FloatType> inputimg,
-					final ProcessingType edge){
-				
-				
-				RandomAccessibleInterval<FloatType> imgout = new ArrayImgFactory<FloatType>().create(inputimg,
-						new FloatType());
-				
-				switch(edge){
-				
-				case Horizontaledge:
-					imgout = inputimg;
-					HorizontalEdge(imgout);
-					break;
-				case Meanfilter:
-					imgout = Meanfilterandsupress(inputimg, 1.0);
-					break;
-				case NaiveEdge:
-					imgout = NaiveEdge(inputimg, new double[]{1,1});
-					break;
-				case Gradientmag:
-					imgout = GradientmagnitudeImage(inputimg);
-					break;
-				case Verticaledge:
-					imgout = inputimg;
-					VerticalEdge(imgout);
-					break;
-				case SupressThresh:
-					imgout = Supressthresh(inputimg);
-					break;
-				case CannyEdge:
-					imgout = CannyEdge(inputimg,new double[]{1,1} );
-					break;
-				default:
-					imgout = Supressthresh(inputimg);
-					break;
-					
-				
-				
-				
-				}
-				
-				
-				return imgout;
-			}
-	
-	
-	
+	public static RandomAccessibleInterval<FloatType> Preprocess(final RandomAccessibleInterval<FloatType> inputimg,
+			final ProcessingType edge) {
+
+		RandomAccessibleInterval<FloatType> imgout = new ArrayImgFactory<FloatType>().create(inputimg, new FloatType());
+
+		switch (edge) {
+
+		case Horizontaledge:
+			imgout = inputimg;
+			HorizontalEdge(imgout);
+			break;
+		case Meanfilter:
+			imgout = Meanfilterandsupress(inputimg, 1.0);
+			break;
+		case NaiveEdge:
+			imgout = NaiveEdge(inputimg, new double[] { 1, 1 });
+			break;
+		case Gradientmag:
+			imgout = GradientmagnitudeImage(inputimg);
+			break;
+		case Verticaledge:
+			imgout = inputimg;
+			VerticalEdge(imgout);
+			break;
+		case SupressThresh:
+			imgout = Supressthresh(inputimg);
+			break;
+		case CannyEdge:
+			imgout = CannyEdge(inputimg, new double[] { 1, 1 });
+			break;
+		default:
+			imgout = Supressthresh(inputimg);
+			break;
+
+		}
+
+		return imgout;
+	}
+
 	public static void ButterflyKernel(final RandomAccessibleInterval<FloatType> inputimage) {
 
 		final float[] butterflyKernel = new float[] { 0, -2, 0, 1, 2, 1, 0, -2, 0 };
@@ -84,7 +89,22 @@ public class Kernels {
 
 		// apply convolution to convolve input data with kernels
 
+		
 		new FFTConvolution<FloatType>(inputimage, Butterfly, new ArrayImgFactory<ComplexFloatType>()).convolve();
+		
+	}
+
+	public static void PerimenterKernel(final RandomAccessibleInterval<UnsignedShortType> inputimage) {
+
+		final short[] butterflyKernel = new short[] { 10, 2, 10, 2, 1, 2, 10, 2, 10 };
+
+		final Img<UnsignedShortType> Butterfly = ArrayImgs.unsignedShorts(butterflyKernel, new long[] { 3, 3 });
+
+		// apply convolution to convolve input data with kernels
+
+		new FFTConvolution<UnsignedShortType>(inputimage, Butterfly, new ArrayImgFactory<ComplexFloatType>())
+				.convolve();
+		ImageJFunctions.show(inputimage);
 	}
 
 	public static void GeneralButterflyKernel(final RandomAccessibleInterval<FloatType> inputimage, double linewidth,
@@ -122,7 +142,6 @@ public class Kernels {
 
 	public static void HorizontalEdge(final RandomAccessibleInterval<FloatType> inputimage) {
 		final float[] HorizontalEdgeFilterKernel = new float[] { -1, 0, 1, -1, 0, 1, -1, 0, 1 };
-
 
 		final Img<FloatType> HorizontalEdgeFilter = ArrayImgs.floats(HorizontalEdgeFilterKernel, new long[] { 3, 3 });
 		// apply convolution to convolve input data with kernels
@@ -184,15 +203,14 @@ public class Kernels {
 			mean.div(new FloatType(n));
 			cursorOutput.get().set(mean);
 		}
-		
-		
+
 	}
 
 	// Naive Edge detector, first get the gradient of the image, then do local
 	// supression
 
 	public static RandomAccessibleInterval<FloatType> NaiveEdge(RandomAccessibleInterval<FloatType> inputimg,
-			 double[] sigma) {
+			double[] sigma) {
 		RandomAccessibleInterval<FloatType> premaximgout = new ArrayImgFactory<FloatType>().create(inputimg,
 				new FloatType());
 		RandomAccessibleInterval<FloatType> maximgout = new ArrayImgFactory<FloatType>().create(inputimg,
@@ -200,53 +218,53 @@ public class Kernels {
 		// Compute gradient of the image
 		premaximgout = GradientmagnitudeImage(inputimg);
 
-		
 		// Compute global threshold for the premaximgout
 		final Float Lowthreshold = GlobalThresholding.AutomaticThresholding(premaximgout);
 		Cursor<FloatType> precursor = Views.iterable(premaximgout).localizingCursor();
 		RandomAccess<FloatType> outputran = maximgout.randomAccess();
-		while(precursor.hasNext()){
+		while (precursor.hasNext()) {
 			precursor.fwd();
 			outputran.setPosition(precursor);
-			if (precursor.get().get()<=Lowthreshold)
+			if (precursor.get().get() <= Lowthreshold)
 				outputran.get().setZero();
 			else
-				outputran.get().set(precursor.get());;
+				outputran.get().set(precursor.get());
+			;
 		}
 		return maximgout;
 
 	}
-public static void SaltandPepperNoise(RandomAccessibleInterval<FloatType> inputimg){
-		
-		final  int saltandpepperlevel = 1;
+
+	public static void SaltandPepperNoise(RandomAccessibleInterval<FloatType> inputimg) {
+
+		final int saltandpepperlevel = 1;
 		final Random rnd = new Random(saltandpepperlevel);
-		
+
 		Cursor<FloatType> cursor = Views.iterable(inputimg).localizingCursor();
 		RandomAccess<FloatType> ranac = inputimg.randomAccess();
-		long [] x = new long[inputimg.numDimensions()];
-		
-		while (cursor.hasNext()){
-			
+		long[] x = new long[inputimg.numDimensions()];
+
+		while (cursor.hasNext()) {
+
 			cursor.fwd();
-			
+
 			for (int d = 0; d < inputimg.numDimensions(); ++d)
-			x[d] = (long) (cursor.getDoublePosition(d));
-			
+				x[d] = (long) (cursor.getDoublePosition(d));
+
 			ranac.setPosition(x);
-			ranac.get().setReal(0.4*rnd.nextDouble());
-			
-			
+			ranac.get().setReal(0.4 * rnd.nextDouble());
+
 		}
-		
+
 	}
 
-public static void addBackground(final IterableInterval<FloatType> iterable, final double value) {
-	for (final FloatType t : iterable)
-		t.setReal(t.get() + value);
-}
+	public static void addBackground(final IterableInterval<FloatType> iterable, final double value) {
+		for (final FloatType t : iterable)
+			t.setReal(t.get() + value);
+	}
 
 	public static RandomAccessibleInterval<FloatType> CannyEdge(RandomAccessibleInterval<FloatType> inputimg,
-			 double[] sigma) {
+			double[] sigma) {
 		int n = inputimg.numDimensions();
 		RandomAccessibleInterval<FloatType> cannyimage = new ArrayImgFactory<FloatType>().create(inputimg,
 				new FloatType());
@@ -254,13 +272,13 @@ public static void addBackground(final IterableInterval<FloatType> iterable, fin
 				new FloatType());
 		RandomAccessibleInterval<FloatType> Threshcannyimg = new ArrayImgFactory<FloatType>().create(inputimg,
 				new FloatType());
-		
-	    // We will create local neighbourhood on this image
+
+		// We will create local neighbourhood on this image
 		gradientimage = GradientmagnitudeImage(inputimg);
-	    
+
 		// This is the intended output image so set up a cursor on it
 		Cursor<FloatType> cursor = Views.iterable(cannyimage).localizingCursor();
-		
+
 		// Extend the input image for gradient computation
 		RandomAccessible<FloatType> view = Views.extendMirrorSingle(inputimg);
 		RandomAccess<FloatType> randomAccess = view.randomAccess();
@@ -282,7 +300,7 @@ public static void addBackground(final IterableInterval<FloatType> iterable, fin
 				randomAccess.setPosition(cursor);
 				// move one pixel back in dimension d
 				randomAccess.bck(d);
-				
+
 				// get the value
 				double Back = randomAccess.get().getRealDouble();
 
@@ -300,7 +318,7 @@ public static void addBackground(final IterableInterval<FloatType> iterable, fin
 
 			}
 			// Normalize the gradient direction
-			
+
 			for (int d = 0; d < inputimg.numDimensions(); ++d) {
 				if (gradient != 0)
 					direction[d] = direction[d] / gradient;
@@ -308,143 +326,140 @@ public static void addBackground(final IterableInterval<FloatType> iterable, fin
 					direction[d] = Double.MAX_VALUE;
 			}
 
-			
 			cursor.get().setReal(Math.sqrt(gradient));
-		
-            // A 5*5*5.. neighbourhood for span = 2, a 3*3*3.. neighbourhood for span = 1.
+
+			// A 5*5*5.. neighbourhood for span = 2, a 3*3*3.. neighbourhood for
+			// span = 1.
 			final int span = 1;
-           // Create a hypersphere at the current point in the gradient image
+			// Create a hypersphere at the current point in the gradient image
 			final HyperSphere<FloatType> localsphere = new HyperSphere<FloatType>(gradientview, cursor, span);
-            // To get only the points which are along the gradient direction create left and right in d dimensions
+			// To get only the points which are along the gradient direction
+			// create left and right in d dimensions
 			Cursor<FloatType> localcursor = localsphere.localizingCursor();
 			for (int d = 0; d < n; ++d) {
 				left[d] = cursor.getDoublePosition(d) - direction[d];
 				right[d] = cursor.getDoublePosition(d) + direction[d];
 			}
 			boolean isMaximum = true;
-            final double tolerance = 20;
-        	final RandomAccess<FloatType> outbound = Threshcannyimg.randomAccess();
+			final double tolerance = 20;
+			final RandomAccess<FloatType> outbound = Threshcannyimg.randomAccess();
 			while (localcursor.hasNext()) {
 				localcursor.fwd();
-			
+
 				for (int d = 0; d < n; ++d)
-					// Before computing maxima check if it is along the gradient direction
-					if(localcursor.getDoublePosition(d)-left[d]==0 || localcursor.getDoublePosition(d)-right[d]==0){
-				    if (cursor.get().compareTo(localcursor.get()) < 0 ) {
-					isMaximum = false;
-				    	
-					break;
+					// Before computing maxima check if it is along the gradient
+					// direction
+					if (localcursor.getDoublePosition(d) - left[d] == 0
+							|| localcursor.getDoublePosition(d) - right[d] == 0) {
+						if (cursor.get().compareTo(localcursor.get()) < 0) {
+							isMaximum = false;
+
+							break;
+						}
+					}
+
+				if (cursor.get().compareTo(localcursor.get()) >= 0) {
+					for (int d = 0; d < n; ++d)
+						// If it is a maxima but not near the gradient
+						// direction, reject it
+						if (Math.abs(localcursor.getDoublePosition(d) - left[d]) > tolerance
+								|| Math.abs(localcursor.getDoublePosition(d) - right[d]) > tolerance) {
+
+							isMaximum = false;
+
+							break;
+						}
 				}
-			}
-				
-				    if (cursor.get().compareTo(localcursor.get()) >= 0 ) {
-				    	for (int d = 0; d < n; ++d)
-							// If it is a maxima but not near the gradient direction, reject it
-							if(Math.abs(localcursor.getDoublePosition(d)-left[d])>tolerance ||
-									Math.abs(localcursor.getDoublePosition(d)-right[d])>tolerance){
-				    	
-					isMaximum = false;
-								
-					break;
+
+				if (isMaximum) {
+
+					outbound.setPosition(cursor);
+					outbound.get().set(cursor.get());
+
 				}
-			}
-				
-			
-			
-			if (isMaximum) {
-				
-				
-				outbound.setPosition(cursor);
-				outbound.get().set(cursor.get());
-				
-			}
 			}
 		}
-		
 
-		//Supress values below the low threshold
+		// Supress values below the low threshold
 		final Float Lowthreshold = GlobalThresholding.AutomaticThresholding(Threshcannyimg);
 		Cursor<FloatType> cannycursor = Views.iterable(Threshcannyimg).localizingCursor();
-		while(cannycursor.hasNext()){
+		while (cannycursor.hasNext()) {
 			cannycursor.fwd();
-			if (cannycursor.get().get()<=Lowthreshold)
+			if (cannycursor.get().get() <= Lowthreshold)
 				cannycursor.get().setZero();
 			else
 				cannycursor.get().set(cannycursor.get());
 		}
-		
-		
+
 		return Threshcannyimg;
 	}
-	
-	public static RandomAccessibleInterval<FloatType> Meanfilterandsupress(RandomAccessibleInterval<FloatType> inputimg, double sigma){
+
+	public static RandomAccessibleInterval<FloatType> Meanfilterandsupress(RandomAccessibleInterval<FloatType> inputimg,
+			double sigma) {
 		// Mean filtering for a given sigma
-		
-		RandomAccessibleInterval<FloatType> outimg = new ArrayImgFactory<FloatType>().create(inputimg,
-				new FloatType());
-				Cursor<FloatType> cursorInput = Views.iterable(inputimg).cursor();
-				Cursor<FloatType> cursorOutput = Views.iterable(outimg).cursor();
-				FloatType mean = Views.iterable(inputimg).firstElement().createVariable();
-				while (cursorInput.hasNext()) {
-					cursorInput.fwd();
-					cursorOutput.fwd();
-					HyperSphere<FloatType> hyperSphere = new HyperSphere<FloatType>(Views.extendMirrorSingle(inputimg),
-							cursorInput, (long) sigma);
-					HyperSphereCursor<FloatType> cursorsphere = hyperSphere.cursor();
-					cursorsphere.fwd();
-					mean.set(cursorsphere.get());
-					int n = 1;
-					while (cursorsphere.hasNext()) {
-						cursorsphere.fwd();
-						n++;
-						mean.add(cursorsphere.get());
-					}
-					mean.div(new FloatType(n));
-					cursorOutput.get().set(mean);
-				}
-				final Float Lowthreshold = GlobalThresholding.AutomaticThresholding(inputimg);
-				Cursor<FloatType> inputcursor = Views.iterable(inputimg).localizingCursor();
-				RandomAccess<FloatType> outputran = outimg.randomAccess();
-				while(inputcursor.hasNext()){
-					inputcursor.fwd();
-					outputran.setPosition(inputcursor);
-					if (inputcursor.get().get()<=  Lowthreshold)
-						outputran.get().setZero();
-					else
-						outputran.get().set(inputcursor.get());
-				}
-			return outimg;
-		
+
+		RandomAccessibleInterval<FloatType> outimg = new ArrayImgFactory<FloatType>().create(inputimg, new FloatType());
+		Cursor<FloatType> cursorInput = Views.iterable(inputimg).cursor();
+		Cursor<FloatType> cursorOutput = Views.iterable(outimg).cursor();
+		FloatType mean = Views.iterable(inputimg).firstElement().createVariable();
+		while (cursorInput.hasNext()) {
+			cursorInput.fwd();
+			cursorOutput.fwd();
+			HyperSphere<FloatType> hyperSphere = new HyperSphere<FloatType>(Views.extendMirrorSingle(inputimg),
+					cursorInput, (long) sigma);
+			HyperSphereCursor<FloatType> cursorsphere = hyperSphere.cursor();
+			cursorsphere.fwd();
+			mean.set(cursorsphere.get());
+			int n = 1;
+			while (cursorsphere.hasNext()) {
+				cursorsphere.fwd();
+				n++;
+				mean.add(cursorsphere.get());
+			}
+			mean.div(new FloatType(n));
+			cursorOutput.get().set(mean);
+		}
+		final Float Lowthreshold = GlobalThresholding.AutomaticThresholding(inputimg);
+		Cursor<FloatType> inputcursor = Views.iterable(inputimg).localizingCursor();
+		RandomAccess<FloatType> outputran = outimg.randomAccess();
+		while (inputcursor.hasNext()) {
+			inputcursor.fwd();
+			outputran.setPosition(inputcursor);
+			if (inputcursor.get().get() <= Lowthreshold)
+				outputran.get().setZero();
+			else
+				outputran.get().set(inputcursor.get());
+		}
+		return outimg;
+
 	}
-	
-	
-	public static RandomAccessibleInterval<FloatType> Supressthresh(RandomAccessibleInterval<FloatType> inputimg){
+
+	public static RandomAccessibleInterval<FloatType> Supressthresh(RandomAccessibleInterval<FloatType> inputimg) {
 		RandomAccessibleInterval<FloatType> Threshimg = new ArrayImgFactory<FloatType>().create(inputimg,
 				new FloatType());
-		//Supress values below the low threshold
+		// Supress values below the low threshold
 		int n = inputimg.numDimensions();
 		double[] position = new double[n];
-				final Float val = GlobalThresholding.AutomaticThresholding(inputimg);
-				final Float Lowthreshold = new Float( 0.1 * val);
-				
-				Cursor<FloatType> inputcursor = Views.iterable(inputimg).localizingCursor();
-				RandomAccess<FloatType> outputran = Threshimg.randomAccess();
-				final double[] sigma = { 1, 1 };
-				while(inputcursor.hasNext()){
-					inputcursor.fwd();
-					inputcursor.localize(position);
-					outputran.setPosition(inputcursor);
-					if (inputcursor.get().get()<= Lowthreshold)
-						outputran.get().setZero();
-					else
-					//	AddGaussian.addGaussian(Threshimg, position, sigma, false);
-						outputran.get().set(inputcursor.get());
-				}
-			return Threshimg;	
-				
-				
+		final Float val = GlobalThresholding.AutomaticThresholding(inputimg);
+		final Float Lowthreshold = new Float(val);
+
+		Cursor<FloatType> inputcursor = Views.iterable(inputimg).localizingCursor();
+		RandomAccess<FloatType> outputran = Threshimg.randomAccess();
+		final double[] sigma = { 1, 1 };
+		while (inputcursor.hasNext()) {
+			inputcursor.fwd();
+			inputcursor.localize(position);
+			outputran.setPosition(inputcursor);
+			if (inputcursor.get().get() <= Lowthreshold)
+				outputran.get().setZero();
+			else
+				// AddGaussian.addGaussian(Threshimg, position, sigma, false);
+				outputran.get().set(inputcursor.get());
+		}
+		return Threshimg;
+
 	}
-	
+
 	public static RandomAccessibleInterval<FloatType> GradientmagnitudeImage(
 			RandomAccessibleInterval<FloatType> inputimg) {
 
@@ -491,5 +506,98 @@ public static void addBackground(final IterableInterval<FloatType> iterable, fin
 		return gradientimg;
 	}
 
+	public static double ComputeParameter(Localizable realpos, RandomAccessibleInterval<BitType> bitimg,
+			RandomAccessibleInterval<IntType> intimg, final int currentlabel) {
+		DoubleType perimeter = new DoubleType(0);
+
+		RandomAccessibleInterval<UnsignedShortType> floatbitimg = new ArrayImgFactory<UnsignedShortType>()
+				.create(bitimg, new UnsignedShortType());
+
+		Cursor<BitType> bitcursor = Views.iterable(bitimg).localizingCursor();
+		RandomAccess<UnsignedShortType> floatranac = floatbitimg.randomAccess();
+		
+		while (bitcursor.hasNext()) {
+
+			if (bitcursor.next().getInteger() == 1){
+				
+				
+				floatranac.setPosition(bitcursor);
+				floatranac.get().setOne();
+			}
+				
+
+		}
+		
+		RandomAccessibleInterval<UnsignedShortType> smallimg = new ArrayImgFactory<UnsignedShortType>()
+				.create(bitimg, new UnsignedShortType());
+		Cursor<IntType> intcursor = Views.iterable(intimg).localizingCursor();
+		RandomAccess<UnsignedShortType> floatranacsec = floatbitimg.randomAccess();
+		RandomAccess<UnsignedShortType> floatsmallranac = smallimg.randomAccess();
+		while(intcursor.hasNext()){
+			intcursor.fwd();
+			
+			if (intcursor.get().get() == currentlabel){
+				floatranacsec.setPosition(intcursor);
+				floatsmallranac.setPosition(floatranacsec);
+				floatsmallranac.get().set(floatranacsec.get());
+				
+			}
+			
+		}
+		
+		
+		PerimenterKernel(smallimg);
+
+		final Cursor<UnsignedShortType> convolvedimagecursor = Views.iterable(smallimg).localizingCursor();
+
+		int pixelA = 0;
+		int pixelB = 0;
+		int pixelC = 0;
+
+		while (convolvedimagecursor.hasNext()) {
+
+			convolvedimagecursor.fwd();
+
+			final int curr = convolvedimagecursor.get().get();
+
+			switch (curr) {
+			case 15:
+			case 7:
+			case 25:
+			case 5:
+			case 17:
+			case 27:
+				pixelA++;
+				break;
+			case 21:
+			case 33:
+				pixelB++;
+				break;
+			case 13:
+			case 23:
+				pixelC++;
+				break;
+			}
+
+		}
+
+		perimeter.set(pixelA + (pixelB * Math.sqrt(2)) + (pixelC * ((1d + Math.sqrt(2)) / 2d)));
+
+		return perimeter.get();
+
+	}
+	
+	public static double Distance(final long[] cordone, final long[] cordtwo) {
+
+		double distance = 0;
+		final double ndims = cordone.length;
+
+		for (int d = 0; d < ndims; ++d) {
+
+			distance += Math.pow((cordone[d] - cordtwo[d]), 2);
+
+		}
+		return Math.sqrt(distance);
+	}
 
 }

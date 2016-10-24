@@ -16,8 +16,10 @@ import ij.ImageJ;
 import ij.ImagePlus;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.stats.Normalize;
+import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.type.logic.BitType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
@@ -26,6 +28,8 @@ import overlaytrack.DisplayGraph;
 import overlaytrack.DisplaysubGraph;
 import preProcessingTools.Kernels;
 import preProcessingTools.MedianFilter2D;
+import segmentBlobs.GetLocalmaxmin;
+import segmentBlobs.GlobalThresholding;
 import segmentBlobs.Staticproperties;
 import trackerType.KFsearch;
 
@@ -38,7 +42,7 @@ public class TrackblobsKFDoG {
 		// Load the stack of images
 		final RandomAccessibleInterval<FloatType> img = util.ImgLib2Util.openAs32Bit(
 				new File(
-						"/Users/varunkapoor/Documents/Pierre_data/Recording_Cell_Culture_Kapoor/mCherry_ShortET-secdup-short.tif"),
+						"../res/15HighNoisyblobs.tif"),
 				new ArrayImgFactory<FloatType>());
 
 		int ndims = img.numDimensions();
@@ -65,17 +69,24 @@ public class TrackblobsKFDoG {
 
 		final int maxframe = (int) img.dimension(ndims - 1);
 		ArrayList<ArrayList<Staticproperties>> Allspots = new ArrayList<ArrayList<Staticproperties>>();
-
+		System.out.println("Appliying Median filter to the stack");
+		final MedianFilter2D<FloatType> medfilter = new MedianFilter2D<FloatType>(img, 1);
+		medfilter.process();
+		final RandomAccessibleInterval<FloatType> preprocessedimage = medfilter.getResult();
+		Normalize.normalize(Views.iterable(preprocessedimage), minval, maxval);
+		ImageJFunctions.show(preprocessedimage);
+		System.out.println("Median filter sucessfully applied");
 		for (int i = 0; i < maxframe; ++i) {
 			IntervalView<FloatType> currentframe = Views.hyperSlice(img, ndims - 1, i);
+            final RandomAccessibleInterval<FloatType> currentframepre =  Views.hyperSlice(preprocessedimage, ndims - 1, i);
+			
+			
+			
+			final Float threshold = GlobalThresholding.AutomaticThresholding(currentframepre);
+			Float val = new Float(threshold);
+			final Img<BitType> bitimg = new ArrayImgFactory<BitType>().create(currentframe, new BitType());
+			GetLocalmaxmin.ThresholdingBit(currentframepre, bitimg, val);
 
-			final MedianFilter2D<FloatType> medfilter = new MedianFilter2D<FloatType>(currentframe, 1);
-			medfilter.process();
-			final RandomAccessibleInterval<FloatType> inputimg = medfilter.getResult();
-			RandomAccessibleInterval<FloatType> preprocessedimg = Kernels.Supressthresh(inputimg);
-			Normalize.normalize(Views.iterable(preprocessedimg), minval, maxval);
-
-			RandomAccessibleInterval<FloatType> currentframepre = preprocessedimg;
 
 			// To get Blobs via DoG detection, uncomment these lines
 
@@ -84,7 +95,7 @@ public class TrackblobsKFDoG {
 			final double[] calibration = { imp.getCalibration().pixelWidth, imp.getCalibration().pixelHeight,
 					imp.getCalibration().pixelDepth };
 
-			ArrayList<Staticproperties> Spotmaxbase = Makebloblist.returnBloblist(currentframe, currentframepre,
+			ArrayList<Staticproperties> Spotmaxbase = Makebloblist.returnBloblist(currentframe, currentframepre, bitimg,
 					minDiameter, maxDiameter, calibration, i);
 
 			Allspots.add(i, Spotmaxbase);

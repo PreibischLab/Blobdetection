@@ -6,6 +6,24 @@ import net.imglib2.RealLocalizable;
 public final class Staticproperties  implements RealLocalizable, Comparable< Staticproperties > {
 
 	
+	/**
+	 * @param maxextent
+	 *                the estimated diamter of the blob
+	 * @param currentframe
+	 *                the current frame
+	 * @param location
+	 *                the real location of the blob. 
+	 * @param sigma 
+	 *                the sigma of the blobs if using 2D Gaussian fits, else 
+	 *                maxextent value in both dimensions.
+	 * @param Intensity
+	 *                the total intensity of the blob.
+	 * @param corr
+	 *               the correlation term when doing 2D Gaussian fits
+	 * @param Circularity
+	 *               the Circularity value for the blob                                                                        
+	 * 
+	 */
 
 		public  double maxextent;
 		public int currentframe;
@@ -13,6 +31,7 @@ public final class Staticproperties  implements RealLocalizable, Comparable< Sta
 		public double[] sigma;
 		public  double Intensity;
 		public double corr;
+		public double Circularity;
 		
 		// Parameter for the cost function to decide how much weight to give to Intensity and to distance
 		/*
@@ -33,11 +52,12 @@ public final class Staticproperties  implements RealLocalizable, Comparable< Sta
 		 */
 		
 		public Staticproperties(final int Label, final int currentframe, final double maxextent, final double[] location,
-				final double Intensity) {
+				final double Intensity, final double Circularity) {
 			this.currentframe = currentframe;
 			this.maxextent = maxextent;
 			this.location = location;
 			this.Intensity = Intensity;
+			this.Circularity = Circularity;
 			
 
 		}
@@ -58,13 +78,15 @@ public final class Staticproperties  implements RealLocalizable, Comparable< Sta
 		public Staticproperties(final int Label, final int currentframe,  final double[] location,final double[] sigma, final double corr,
 				final double noise,
 				final double maxextent,
-				final double Intensity) {
+				final double Intensity,
+				final double Circularity) {
 			this.currentframe = currentframe;
 			this.sigma = sigma;
 			this.location = location;
 			this.Intensity = Intensity;
 			this.maxextent = maxextent;
 			this.corr = corr;
+			this.Circularity = Circularity;
 
 		}
 		
@@ -80,23 +102,25 @@ public final class Staticproperties  implements RealLocalizable, Comparable< Sta
 		 */
 		
 		public Staticproperties(final int currentframe, final double maxextent, final double[] location,
-				final double Intensity) {
+				final double Intensity, final double Circularity) {
 			this.currentframe = currentframe;
 			this.maxextent = maxextent;
 			this.location = location;
 			this.Intensity = Intensity;
+			this.Circularity = Circularity;
 			
 
 		}
 		
 		
 		public Staticproperties(final int currentframe,  final double[] location,final double[] sigma, double corr,
-				final double Intensity) {
+				final double Intensity, final double Circularity) {
 			this.currentframe = currentframe;
 			this.sigma = sigma;
 			this.location = location;
 			this.Intensity = Intensity;
 			this.corr = corr;
+			this.Circularity = Circularity;
 
 		}
 		/**
@@ -111,9 +135,10 @@ public final class Staticproperties  implements RealLocalizable, Comparable< Sta
 		 */
 		
 		public Staticproperties(final int currentframe, final double maxextent, final RealLocalizable location,
-				final double Intensity) {
+				final double Intensity, final double Circularity) {
 			
-			this(currentframe, maxextent, new double [] {location.getDoublePosition(0) , location.getDoublePosition(1)}, Intensity);
+			this(currentframe, maxextent, 
+					new double [] {location.getDoublePosition(0) , location.getDoublePosition(1)}, Intensity, Circularity);
 			
 			
 
@@ -173,7 +198,7 @@ public final class Staticproperties  implements RealLocalizable, Comparable< Sta
 				distance += (sourceLocation[d]  - targetLocation[d])  * (sourceLocation[d]  - targetLocation[d] );
 			}
 			
-			double IntensityweightedDistance =  ((distance ))* (Intensity / target.Intensity) * (Intensity / target.Intensity);
+			double IntensityweightedDistance =  (distance )* Math.pow((Intensity / target.Intensity), 2) ;
 			
 			return IntensityweightedDistance;
 		}

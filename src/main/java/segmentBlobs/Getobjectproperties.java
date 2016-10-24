@@ -29,6 +29,7 @@ import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Intervals;
 import net.imglib2.util.RealSum;
 import net.imglib2.view.Views;
+import preProcessingTools.Kernels;
 import util.ImgLib2Util;
 
 @SuppressWarnings("deprecation")
@@ -39,14 +40,17 @@ public class Getobjectproperties {
 
 	private  RandomAccessibleInterval<FloatType> inputimg;
 	private  RandomAccessibleInterval<IntType> labelledimg;
+	private  RandomAccessibleInterval<BitType> bitimg;
 	private  int ndims;
 	private  int minRadius;
 	private  int maxRadius;
 
 	public Getobjectproperties(final RandomAccessibleInterval<FloatType> inputimg,
-			final RandomAccessibleInterval<IntType> labelledimg, final int minRadius, final int maxRadius) {
+			final RandomAccessibleInterval<IntType> labelledimg, final RandomAccessibleInterval<BitType> bitimg,
+			final int minRadius, final int maxRadius) {
 		this.inputimg = inputimg;
 		this.labelledimg = labelledimg;
+		this.bitimg = bitimg;
 		this.ndims = inputimg.numDimensions();
 		this.minRadius = minRadius;
 		this.maxRadius = maxRadius;
@@ -54,10 +58,11 @@ public class Getobjectproperties {
 	}
 	
 	public Getobjectproperties(final RandomAccessibleInterval<FloatType> inputimg,
-			final RandomAccessibleInterval<IntType> labelledimg){
+			final RandomAccessibleInterval<IntType> labelledimg, final RandomAccessibleInterval<BitType> bitimg){
 		
 		this.inputimg = inputimg;
 		this.labelledimg = labelledimg;
+		this.bitimg = bitimg;
 		this.ndims = inputimg.numDimensions();
 		
 	}
@@ -67,7 +72,7 @@ public class Getobjectproperties {
 	// after neglecting the background which carries the label 0
 	public Objprop Getobjectprops(int currentlabel) {
 
-		double Radius = 0;
+		int Radius = 0;
 		double totalintensity = 0;
 
 		Point pos = GetLocalmaxmin.computeMaxinLabel(inputimg, labelledimg, currentlabel);
@@ -77,9 +82,17 @@ public class Getobjectproperties {
 		Radius = pair.fst;
 		totalintensity = pair.snd;
 
+		double Area = GetArea(pos, Radius);
+		 
+
+		 double perimeter =  Kernels.ComputeParameter(pos, bitimg, labelledimg, currentlabel);
+		 
+		 double Circularity = 4d * Math.PI * Area / (perimeter * perimeter);
+		
+		 System.out.println("Area" + " " + Area + " " + " Perimeter " + " " + perimeter);
 		// Store all object properties in the java object and arraylist of
 		// that object
-		final Objprop props = new Objprop(currentlabel, 2 * Radius, totalintensity);
+		final Objprop props = new Objprop(currentlabel, 2 * Radius, totalintensity, Circularity);
 
 		return props;
 
@@ -101,9 +114,23 @@ public class Getobjectproperties {
 		final double[] sigma = {1.0 / Math.sqrt(final_param[3]), 1.0 / Math.sqrt(final_param[4])};
 		final double corr = final_param[5];
 		final double totalintensity = final_param[0];
-		final double diameter = 0.5 * (sigma[0] + sigma[1]);
+		final double Radius = 0.5 * (sigma[0] + sigma[1]);
 		final double noise = final_param[6];
-		final Objprop props = new Objprop(currentlabel,diameter, location, sigma, corr, noise, totalintensity);
+		
+		 double Area = GetArea(location, (int)Radius);
+		 
+		 Point newpoint = new Point(pos.numDimensions());
+		 for (int d = 0; d < pos.numDimensions(); ++d){
+			 
+			newpoint.setPosition((int)location[d], d);
+			 
+		 }
+
+		 double perimeter =  Kernels.ComputeParameter(newpoint, bitimg, labelledimg, currentlabel);
+		 
+		 double Circularity = 4d * Math.PI * Area / (perimeter * perimeter);
+		 
+		final Objprop props = new Objprop(currentlabel, Radius, location, sigma, corr, noise, totalintensity, Circularity);
 		return props;
 		
 		
@@ -119,9 +146,24 @@ public class Getobjectproperties {
 		Radius = pair.fst;
 		totalintensity = pair.snd;
 
+		 double Area = GetArea(realpos, (int)Radius);
+		 Point newpoint = new Point(realpos.numDimensions());
+		 for (int d = 0; d < realpos.numDimensions(); ++d){
+			 
+			newpoint.setPosition((int)realpos.getDoublePosition(d), d);
+			 
+		 }
+
+		 double perimeter =  Kernels.ComputeParameter(newpoint, bitimg, labelledimg, currentlabel);
+		 
+		 double Circularity = 0;
+		 if (perimeter > 0)
+		 Circularity = 4d * Math.PI * Area / (perimeter * perimeter);
+		 
+		 
 		// Store all object properties in the java object and arraylist of
 		// that object
-		final Objprop props = new Objprop(currentlabel, 2 * Radius, totalintensity);
+		final Objprop props = new Objprop(currentlabel, 2 * Radius, totalintensity, Circularity);
 
 		return props;
 	}
@@ -198,9 +240,82 @@ public class Getobjectproperties {
 			}
 		}
 
+		
+		
+		
 		Pair<Integer, Double> pair = new Pair<Integer, Double>(BlobRadius, Blobintensity);
 
 		return pair;
+	}
+	
+	public double GetArea (Localizable point, int Radius){
+		
+		double totalArea = 0;
+		HyperSphere<FloatType> sphere = new HyperSphere<FloatType>(inputimg, point, Radius);
+
+		HyperSphereCursor<FloatType> sphereCursor = sphere.localizingCursor();
+		
+		while (sphereCursor.hasNext()) {
+
+			sphereCursor.fwd();
+
+			totalArea++;
+
+		}
+
+		return totalArea;
+	}
+	
+	
+    public double GetArea (RealLocalizable point, int Radius){
+		
+		double totalArea = 0;
+		Point floatpoint = new Point(ndims);
+		for (int d = 0; d < ndims; ++d) {
+
+			floatpoint.setPosition((int) point.getDoublePosition(d), d);
+
+		}
+		HyperSphere<FloatType> sphere = new HyperSphere<FloatType>(inputimg, floatpoint, Radius);
+
+		HyperSphereCursor<FloatType> sphereCursor = sphere.localizingCursor();
+		
+		while (sphereCursor.hasNext()) {
+
+			sphereCursor.fwd();
+
+			totalArea++;
+
+		}
+
+		return totalArea;
+	}
+    
+   public double GetArea (double[] point, int Radius){
+		
+		double totalArea = 0;
+		
+		final Point longpoint = new Point(point.length);
+		
+		for (int d = 0; d < point.length; ++d ){
+			
+			longpoint.setPosition((long)point[d], d);
+			
+		}
+		
+		HyperSphere<FloatType> sphere = new HyperSphere<FloatType>(inputimg, longpoint, Radius);
+
+		HyperSphereCursor<FloatType> sphereCursor = sphere.localizingCursor();
+		
+		while (sphereCursor.hasNext()) {
+
+			sphereCursor.fwd();
+
+			totalArea++;
+
+		}
+
+		return totalArea;
 	}
 
 	public Pair<Double, Double> ImproveRadius(RealLocalizable point, int minRadius, int maxRadius) {

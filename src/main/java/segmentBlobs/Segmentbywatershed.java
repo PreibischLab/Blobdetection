@@ -11,6 +11,7 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.dog.DogDetection;
 import net.imglib2.algorithm.localextrema.RefinedPeak;
 import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.type.logic.BitType;
 import net.imglib2.type.numeric.integer.IntType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.IntervalView;
@@ -19,12 +20,12 @@ import net.imglib2.view.Views;
 public class Segmentbywatershed {
 
 	public static RandomAccessibleInterval<IntType> getsegmentedimage(
-			final RandomAccessibleInterval<FloatType> blobimage) {
+			final RandomAccessibleInterval<FloatType> blobimage, final RandomAccessibleInterval<BitType> bitimg) {
 
 		RandomAccessibleInterval<IntType> labelledimage = new ArrayImgFactory<IntType>().create(blobimage,
 				new IntType());
 
-		labelledimage = segmentBlobs.Watersheddding.Dowatersheddingonly(blobimage);
+		labelledimage = segmentBlobs.Watersheddding.Dowatersheddingonly(blobimage, bitimg);
 
 		// ImageJFunctions.show(labelledimage);
 		return labelledimage;
@@ -32,7 +33,9 @@ public class Segmentbywatershed {
 	
 	
 	public static ArrayList<Staticproperties> Gaussdetection(final IntervalView<FloatType> blobimage,
-			final RandomAccessibleInterval<IntType> labelledimage, int framenumber) throws Exception{
+			final RandomAccessibleInterval<IntType> labelledimage,
+			final RandomAccessibleInterval<BitType> bitimg,
+			int framenumber) throws Exception{
 		final int ndims = blobimage.numDimensions();
 		final int Maxlabel = Watersheddding.GetMaxlabelsseeded(labelledimage);
 		ArrayList<Staticproperties> staticprops = new ArrayList<Staticproperties>(ndims);
@@ -42,29 +45,43 @@ public class Segmentbywatershed {
 					new FloatType());
 			outimg = Watersheddding.CurrentLabelImage(labelledimage, blobimage, label);
 		
-			final Getobjectproperties props = new Getobjectproperties(outimg, labelledimage);
+			final Getobjectproperties props = new Getobjectproperties(outimg, labelledimage, bitimg);
 		
+			
 		final Objprop Refinedobjectproperties = props.GetRefinedobjectprops(label);
-		
+			
 
+		if (Math.abs(Refinedobjectproperties.corr) <= 1.0E-3)
+			Refinedobjectproperties.corr = 0;
 		final Staticproperties statprops = new Staticproperties(label, framenumber,
 				Refinedobjectproperties.location,
 				Refinedobjectproperties.sigma,
 				Refinedobjectproperties.corr,
 				Refinedobjectproperties.noise,
 				Refinedobjectproperties.diameter,
-				Refinedobjectproperties.totalintensity);
+				Refinedobjectproperties.totalintensity,
+				Refinedobjectproperties.Circularity);
 
+		final double radius = 0.5 * (Refinedobjectproperties.sigma[0]  + 
+				               Refinedobjectproperties.sigma[1]);
 		// System.out.println(label + " " + Refinedobjectproperties.totalintensity );
+		if (Refinedobjectproperties.totalintensity > 0 && Refinedobjectproperties.sigma[0] > 0 
+				&& Refinedobjectproperties.sigma[1] > 0 && Refinedobjectproperties.location[0] > 0
+				&& Refinedobjectproperties.location[1] > 0 && radius > 6 ){
+			System.out.println( "Location: " + "" + Refinedobjectproperties.location[0] + " " + Refinedobjectproperties.location[1]
+					+ "Circularity" + " " + Refinedobjectproperties.Circularity);
+			
 		staticprops.add(statprops);
 		}
-		
+		}
 		return staticprops;
 	}
 	
 
 	public static ArrayList<Staticproperties> DoGdetection(final IntervalView<FloatType> blobimage,
-			final RandomAccessibleInterval<IntType> labelledimage, final int minRadius, final int maxRadius,
+			final RandomAccessibleInterval<IntType> labelledimage,
+			final RandomAccessibleInterval<BitType> bitimg,
+			final int minRadius, final int maxRadius,
 			final double[] calibration, int framenumber) {
 		final int ndims = blobimage.numDimensions();
 
@@ -72,7 +89,7 @@ public class Segmentbywatershed {
 
 		ArrayList<Staticproperties> staticprops = new ArrayList<Staticproperties>(ndims);
 
-		final Getobjectproperties props = new Getobjectproperties(blobimage, labelledimage, minRadius, maxRadius);
+		final Getobjectproperties props = new Getobjectproperties(blobimage, labelledimage, bitimg, minRadius, maxRadius);
 
 		final int Maxlabel = Watersheddding.GetMaxlabelsseeded(labelledimage);
 
@@ -81,18 +98,20 @@ public class Segmentbywatershed {
 		for (int label = 1; label < Maxlabel - 1; ++label) {
 			RandomAccessibleInterval<FloatType> outimg = new ArrayImgFactory<FloatType>().create(blobimage,
 					new FloatType());
-			final Objprop objproperties = props.Getobjectprops(label);
-
-			final double estimatedDiameter = objproperties.diameter;
+			
 
 			outimg = Watersheddding.CurrentLabelImage(labelledimage, blobimage, label);
 			final long[] minCorner = Watersheddding.GetMincorners(labelledimage, label);
 			final long[] maxCorner = Watersheddding.GetMaxcorners(labelledimage, label);
 			FinalInterval smallinterval = new FinalInterval(minCorner , maxCorner );
 			
+			final Objprop objproperties = props.Getobjectprops(label);
+
+			final double estimatedDiameter = objproperties.diameter;
+			
 			// Determine local threshold value for each label, choose low value such as 0.5 * val to include more peak detections
 			Float val = GlobalThresholding.AutomaticThresholding(outimg);
-			Float threshold = new Float(0.5 * val);
+			Float threshold = new Float(val);
 
 			double sigma1 =  estimatedDiameter ;
 			double sigma2 = 1.2 * estimatedDiameter ;
@@ -115,8 +134,10 @@ public class Segmentbywatershed {
 						objproperties.diameter,
 						new double[] { SubpixelMinlist.get(index).getDoublePosition(0),
 								SubpixelMinlist.get(index).getDoublePosition(1) },
-						objproperties.totalintensity);
-
+						objproperties.totalintensity, objproperties.Circularity);
+				System.out.println( "Location: " + "" + SubpixelMinlist.get(index).getDoublePosition(0) +
+						" " + SubpixelMinlist.get(index).getDoublePosition(1)
+						+ "Circularity" + " " + objproperties.Circularity);
 				// System.out.println(label + " " + estimatedDiameter );
 				staticprops.add(statprops);
 

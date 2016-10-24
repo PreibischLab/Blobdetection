@@ -19,6 +19,7 @@ import net.imglib2.labeling.DefaultROIStrategyFactory;
 import net.imglib2.labeling.Labeling;
 import net.imglib2.labeling.LabelingROIStrategy;
 import net.imglib2.labeling.NativeImgLabeling;
+import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.neighborsearch.NearestNeighborSearchOnKDTree;
 import net.imglib2.type.logic.BitType;
 import net.imglib2.type.numeric.integer.IntType;
@@ -35,12 +36,12 @@ public class Watersheddding {
 	}
 
 	public static RandomAccessibleInterval<IntType> Dowatersheddingonly(
-			final RandomAccessibleInterval<FloatType> biginputimg) {
+			final RandomAccessibleInterval<FloatType> biginputimg, final RandomAccessibleInterval<BitType> bitimg) {
 
 		// Perform the distance transform
 		final Img<FloatType> distimg = new ArrayImgFactory<FloatType>().create(biginputimg, new FloatType());
 
-		RandomAccessibleInterval<BitType> bitimg = DistanceTransformImage(biginputimg, distimg, InverseType.Straight);
+		DistanceTransformImage(biginputimg, distimg, bitimg, InverseType.Straight);
 
 		// Prepare seed image for watershedding
 		NativeImgLabeling<Integer, IntType> oldseedLabeling = new NativeImgLabeling<Integer, IntType>(
@@ -54,28 +55,24 @@ public class Watersheddding {
 				new ArrayImgFactory<IntType>().create(biginputimg, new IntType()));
 
 		outputLabeling = GetlabeledImage(distimg, oldseedLabeling);
-
+	
 		return outputLabeling.getStorageImg();
 	}
 
-	public static RandomAccessibleInterval<BitType> DistanceTransformImage(RandomAccessibleInterval<FloatType> inputimg,
-			RandomAccessibleInterval<FloatType> outimg, final InverseType invtype) {
+
+	
+	
+	public static void  DistanceTransformImage(RandomAccessibleInterval<FloatType> inputimg,
+			RandomAccessibleInterval<FloatType> outimg,RandomAccessibleInterval<BitType> bitimg, final InverseType invtype) {
 		int n = inputimg.numDimensions();
 
-		final Img<BitType> bitimg = new ArrayImgFactory<BitType>().create(inputimg, new BitType());
 		// make an empty list
 		final RealPointSampleList<BitType> list = new RealPointSampleList<BitType>(n);
 
-		final Float threshold = GlobalThresholding.AutomaticThresholding(inputimg);
-
-		Float val = new Float(threshold);
-
 		
-
-		GetLocalmaxmin.ThresholdingBit(inputimg, bitimg, val);
-
+		
 		// cursor on the binary image
-		final Cursor<BitType> cursor = bitimg.localizingCursor();
+		final Cursor<BitType> cursor = Views.iterable(bitimg).localizingCursor();
 
 		// for every pixel that is 1, make a new RealPoint at that location
 		while (cursor.hasNext())
@@ -126,7 +123,6 @@ public class Watersheddding {
 				ranac.get().setZero();
 			}
 		}
-		return bitimg;
 	}
 
 	public static NativeImgLabeling<Integer, IntType> PrepareSeedImage(RandomAccessibleInterval<FloatType> inputimg,

@@ -7,6 +7,7 @@ import java.util.Map;
 import blobObjects.FramedBlob;
 import fakeblobs.AddGaussian;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.algorithm.stats.Normalize;
 import net.imglib2.meta.view.HyperSliceImgPlus;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.IntervalView;
@@ -49,14 +50,15 @@ public class DisplayBlobs {
 	}
 	
 	
-	public static void DisplayRefineddetection(RandomAccessibleInterval<FloatType> img, ArrayList<FramedBlob> frameandblob) {
+	public static void DisplayRefineddetection(RandomAccessibleInterval<FloatType> img, ArrayList<FramedBlob> frameandblob,
+			FloatType minVal, FloatType maxVal) {
 
 
 		int ndims = img.numDimensions();
 
 			
 
-			for (int index = 0; index < frameandblob.size() - 1; ++index) {
+			for (int index = 0; index < frameandblob.size() ; ++index) {
 
 				int currentframe = frameandblob.get(index).frame;
 
@@ -69,9 +71,8 @@ public class DisplayBlobs {
 							frameandblob.get(index).Blobs.corr
 							);
 					
-				
+					Normalize.normalize(Views.iterable(groundframe), minVal, maxVal);
 
-			//	System.out.println(frameandblob.get(index).Blobs.Intensity);
 
 		}
 
