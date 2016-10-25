@@ -1,5 +1,6 @@
 package runTracker;
 
+import java.awt.Color;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,14 +15,22 @@ import blobObjects.Subgraphs;
 import costMatrix.CostFunction;
 import costMatrix.IntensityDiffCostFunction;
 import costMatrix.SquareDistCostFunction;
+import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
+import ij.ImageStack;
+import mserTree.GetMSERtree;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.algorithm.componenttree.mser.MserTree;
 import net.imglib2.algorithm.stats.Normalize;
+import net.imglib2.converter.Converter;
+import net.imglib2.converter.Converters;
+import net.imglib2.img.ImagePlusAdapter;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.logic.BitType;
+import net.imglib2.type.numeric.integer.IntType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
@@ -35,6 +44,7 @@ import segmentBlobs.GlobalThresholding;
 import segmentBlobs.Staticproperties;
 import trackerType.KFSearchRefined;
 import trackerType.KFsearch;
+import net.imglib2.type.numeric.integer.UnsignedByteType;
 
 public class TrackblobsKFGauss {
 
@@ -48,17 +58,21 @@ public class TrackblobsKFGauss {
 						"../res/5framestack.tif"),
 				new ArrayImgFactory<FloatType>());
 		
+		
 		int ndims = img.numDimensions();
 		new Normalize();
 
 		FloatType minval = new FloatType(0);
 		FloatType maxval = new FloatType(1);
 		Normalize.normalize(Views.iterable(img), minval, maxval);
-
+		
 		ImagePlus imp = ImageJFunctions.show(img);
 		ImagePlus impcopy = ImageJFunctions.show(img);
-
-		
+		final double delta = 10;
+		final long minSize = 2;
+		final long maxSize = 4000;
+		final double maxVar = 0.8;
+		final double minDiversity = 0.8;
 		// Cost function
 		/**
 		 * Choose one of the cost functions
@@ -85,12 +99,48 @@ public class TrackblobsKFGauss {
 		System.out.println("Median filter sucessfully applied");
 		
 		
+		
+		
 		for (int i = 0; i < maxframe; ++i) {
 			
 			IntervalView<FloatType> currentframe = Views.hyperSlice(img, ndims - 1, i);
 
 			final RandomAccessibleInterval<FloatType> currentframepre =  Views.hyperSlice(preprocessedimage, ndims - 1, i);
 			
+			
+			final RandomAccessibleInterval<UnsignedByteType> mserInput = Converters.convert(
+					 currentframepre,
+					 new Converter<FloatType, UnsignedByteType>(){
+
+						@Override
+						
+						
+						
+						public void convert(FloatType input, UnsignedByteType output) {
+							output.setReal(input.getRealDouble() * 1000);
+							
+						}
+						 
+					 },
+					 new UnsignedByteType());
+			
+			
+			
+			ImageJFunctions.show(mserInput).setTitle("MserInput");
+			
+			final ImageStack stack = new ImageStack( (int) currentframe.dimension( 0 ), (int) currentframe.dimension( 1 ) );
+			
+			ImagePlus currentimp = IJ.getImage();
+			
+			System.out.println("Making Component tree for " + "frame: " + i);
+			MserTree<UnsignedByteType> newtree =  MserTree.buildMserTree(mserInput,  delta, minSize, maxSize, maxVar, minDiversity, true);
+			System.out.println("Component tree makde for " + "frame : " + i);
+			
+			final GetMSERtree visualizetree = new GetMSERtree(currentimp, stack);
+			visualizetree.visualise(newtree, Color.green);
+			
+			final ImagePlus imptmp = new ImagePlus("components", stack);
+			imptmp.show();
 			
 			
 			final Float threshold = GlobalThresholding.AutomaticThresholding(currentframepre);

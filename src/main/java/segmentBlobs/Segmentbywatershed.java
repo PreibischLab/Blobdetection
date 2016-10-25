@@ -27,7 +27,6 @@ public class Segmentbywatershed {
 
 		labelledimage = segmentBlobs.Watersheddding.Dowatersheddingonly(blobimage, bitimg);
 
-		// ImageJFunctions.show(labelledimage);
 		return labelledimage;
 	}
 	
