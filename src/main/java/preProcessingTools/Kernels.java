@@ -104,7 +104,6 @@ public class Kernels {
 
 		new FFTConvolution<UnsignedShortType>(inputimage, Butterfly, new ArrayImgFactory<ComplexFloatType>())
 				.convolve();
-		ImageJFunctions.show(inputimage);
 	}
 
 	public static void GeneralButterflyKernel(final RandomAccessibleInterval<FloatType> inputimage, double linewidth,
