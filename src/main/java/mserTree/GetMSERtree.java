@@ -2,6 +2,11 @@ package mserTree;
 
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -9,6 +14,7 @@ import ij.ImageStack;
 import ij.gui.EllipseRoi;
 import ij.gui.Overlay;
 import ij.process.ByteProcessor;
+import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import net.imglib2.Cursor;
 import net.imglib2.Localizable;
@@ -18,6 +24,8 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealInterval;
 import net.imglib2.algorithm.componenttree.mser.Mser;
 import net.imglib2.algorithm.componenttree.mser.MserTree;
+import net.imglib2.algorithm.componenttree.pixellist.PixelListComponent;
+import net.imglib2.algorithm.componenttree.pixellist.PixelListComponentTree;
 import net.imglib2.converter.Converter;
 import net.imglib2.converter.Converters;
 import net.imglib2.img.ImagePlusAdapter;
@@ -32,163 +40,259 @@ import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Util;
 
-public class GetMSERtree < T extends IntegerType< T > > {
+public class GetMSERtree<T extends RealType<T>> {
 
-	
 	final ImagePlus imp;
 	final Overlay ov;
 	final ImageStack stack;
 	final int w;
 	final int h;
-	
-	
-	public GetMSERtree( final ImagePlus imp, final ImageStack stack )
-	{
+
+	public GetMSERtree(final ImagePlus imp, final ImageStack stack) {
 		this.imp = imp;
 		ov = new Overlay();
-		imp.setOverlay( ov );
-		
+		imp.setOverlay(ov);
+
 		this.stack = stack;
 		this.w = imp.getWidth();
 		this.h = imp.getHeight();
-		
-	}
-	
-	
-	public static < T extends RealType<T>>  RandomAccessibleInterval<UnsignedByteType> Typeconversion (RandomAccessibleInterval<T> inputimg){
-		
-		 
-		ImageJFunctions.show(inputimg);
-				final ImagePlus currentimp = IJ.getImage();
-				IJ.run("Lena (68K)");
-				IJ.run("8-bit");
-				
-				final RandomAccessibleInterval<UnsignedByteType> output  = ImagePlusAdapter.wrapByte( currentimp );
-		
-		/*= Converters.convert(
-				 inputimg,
-				 new Converter<T, UnsignedByteType>(){
 
-					@Override
-					
-					public void convert(T input, UnsignedByteType output) {
-						output.setReal(input.getRealDouble()*1000);
-						
-					}
-					 
-				 },
-				 new UnsignedByteType());
-		*/
-		return output;
 	}
-	
-	public static < T extends RealType<T>> MserTree<UnsignedByteType>  Treeimage(Img< UnsignedByteType > inputimg, final double delta, final long minSize, final long maxSize, final double maxVar, final double minDiversity, final boolean darkToBright ){
-		
-		
-		//final RandomAccessibleInterval<UnsignedByteType> mserInput = Typeconversion(inputimg);
-		
-		 MserTree<UnsignedByteType> newtree =  MserTree.buildMserTree(inputimg,  delta, minSize, maxSize, maxVar, minDiversity, darkToBright);
-		 
+
+	public GetMSERtree(final ImagePlus imp) {
+
+		this.imp = imp;
+		ov = new Overlay();
+		imp.setOverlay(ov);
+
+		this.stack = null;
+		this.w = imp.getWidth();
+		this.h = imp.getHeight();
+	}
+
+	public static <T extends RealType<T>> MserTree<UnsignedByteType> Treeimage(Img<UnsignedByteType> inputimg,
+			final double delta, final long minSize, final long maxSize, final double maxVar, final double minDiversity,
+			final boolean darkToBright) {
+
+		MserTree<UnsignedByteType> newtree = MserTree.buildMserTree(inputimg, delta, minSize, maxSize, maxVar,
+				minDiversity, darkToBright);
+
 		return newtree;
-		
+
 	}
-	
-	public <T extends RealType<T>> void visualise( final MserTree< T > tree, final Color color )
-	{
-		for ( final Mser< T > mser : tree )
-			visualise( mser, color );
+
+	public void visualise(final MserTree<T> tree, final Color color) {
+
+		ArrayList<double[]> meanandcovlist = new ArrayList<double[]>();
+
+		final HashSet<Mser<T>> rootset = tree.roots();
+		final Iterator<Mser<T>> rootsetiterator = tree.iterator();
+		System.out.println("Size of root set: " + tree.size());
+		int i = 0;
+		while (rootsetiterator.hasNext()) {
+
+			Mser<T> mser = rootsetiterator.next();
+
+		//	System.out.println(i + " " + mser.size());
+			if (mser.size() > 0) {
+
+				//	System.out.println("Papa: " + 
+				//			mser.mean()[0] + " " + mser.mean()[1]);
+			}
+		//	final double[] meanandcov = { mser.mean()[0], mser.mean()[1], mser.cov()[0], mser.cov()[1], mser.cov()[2] };
+
+		//	meanandcovlist.add(meanandcov);
+			if (mser.getChildren().size() - 1  > 0) {
+
+				for (int index = 0; index < mser.getChildren().size(); ++index) {
+			//		System.out.println(
+			//				mser.getChildren().get(index).mean()[0] + " " + mser.getChildren().get(index).mean()[1]);
+					
+					final double[] meanandcovchild = { mser.getChildren().get(index).mean()[0], mser.getChildren().get(index).mean()[1],
+							mser.getChildren().get(index).cov()[0], mser.getChildren().get(index).cov()[1], mser.getChildren().get(index).cov()[2] };
+					
+					meanandcovlist.add(meanandcovchild);
+				}
+			}
+			i++;
+
+		}
+
+	//	for (final Mser<T> mser : tree) {
+
+			
+	//	}
+		/*
+		 * for (int i = 0; i < meanandcovlist.size(); i++) { for (int j =
+		 * meanandcovlist.size() - 1; j >= i; j--) { // If i is j, then it's the
+		 * same object and don't need to be compared. if (i == j) { continue; }
+		 * // If the compared objects are equal, remove them from the copy and
+		 * break // to the next loop if (Math.abs(meanandcovlist.get(i)[0] -
+		 * meanandcovlist.get(j)[0]) < 1 && Math.abs(meanandcovlist.get(i)[1] -
+		 * meanandcovlist.get(j)[1]) < 1 ) {
+		 * meanandcovlist.remove(meanandcovlist.get(i)); break; } } }
+		 */
+		for (int index = 0; index < meanandcovlist.size(); ++index) {
+
+			final double[] mean = new double[] { meanandcovlist.get(index)[0], meanandcovlist.get(index)[1] };
+			final double[] covar = new double[] { meanandcovlist.get(index)[2], meanandcovlist.get(index)[3],
+					meanandcovlist.get(index)[4] };
+			final EllipseRoi ellipse = createEllipse(mean, covar, 3);
+			ellipse.setStrokeColor(color);
+			ov.add(ellipse);
+
+		}
+
 	}
-	
+
+	public void visualise(final PixelListComponentTree<T> tree) {
+		for (final PixelListComponent<T> pixel : tree)
+			visualise(pixel);
+	}
+
+	/**
+	 * Visualise PixelListComponentTree.
+	 */
+	public void visualise(final PixelListComponent<T> pixel) {
+
+		final ByteProcessor byteProcessor = new ByteProcessor(w, h);
+		final byte[] pixels = (byte[]) byteProcessor.getPixels();
+		System.out.println(pixel.value());
+		for (final Localizable l : pixel) {
+			final int x = l.getIntPosition(0);
+			final int y = l.getIntPosition(1);
+			pixels[y * w + x] = (byte) (255 & 0xff);
+
+		}
+		final String label = "" + pixel.value();
+		if (stack != null)
+			stack.addSlice(label, byteProcessor);
+
+	}
+
 	/**
 	 * Visualise MSER. Add a 3sigma ellipse overlay to imgplus in the given
 	 * color. Add a slice to the stack showing binary mask of MSER region.
 	 */
-	public <T extends RealType<T>> void visualise( final Mser< T > mser, final Color color )
-	{
-		
-		final ByteProcessor byteProcessor = new ByteProcessor( w, h );
-		final byte[] pixels = ( byte[] )byteProcessor.getPixels();
-		for ( final Localizable l : mser )
-		{
-			final int x = l.getIntPosition( 0 );
-			final int y = l.getIntPosition( 1 );
-			pixels[ y * w + x ] = (byte)(255 & 0xff);
-			
-			
+	public void visualise(final Mser<T> mser, final Color color) {
+
+		final ByteProcessor byteProcessor = new ByteProcessor(w, h);
+		final byte[] pixels = (byte[]) byteProcessor.getPixels();
+		for (final Localizable l : mser) {
+			final int x = l.getIntPosition(0);
+			final int y = l.getIntPosition(1);
+			pixels[y * w + x] = (byte) (255 & 0xff);
+
 		}
 		final String label = "" + mser.value();
-		stack.addSlice( label, byteProcessor );
+		if (stack != null)
+			stack.addSlice(label, byteProcessor);
 
-		final EllipseRoi ellipse = createEllipse( mser.mean(), mser.cov(), 3 );
-		ellipse.setStrokeColor( color );
-		ov.add( ellipse );
-		
 	}
-	
 
-	 /** 2D correlated Gaussian
-	 * @param mean (x,y) components of mean vector
-	 * @param cov (xx, xy, yy) components of covariance matrix
+	/**
+	 * 2D correlated Gaussian
+	 * 
+	 * @param mean
+	 *            (x,y) components of mean vector
+	 * @param cov
+	 *            (xx, xy, yy) components of covariance matrix
 	 * @return ImageJ roi
 	 */
-	public static EllipseRoi createEllipse( final double[] mean, final double[] cov, final double nsigmas )
-	{
-       final double a = cov[0];
-       final double b = cov[1];
-       final double c = cov[2];
-       final double d = Math.sqrt( a*a + 4*b*b - 2*a*c + c*c );
-       final double scale1 = Math.sqrt( 0.5 * ( a+c+d ) ) * nsigmas;
-       final double scale2 = Math.sqrt( 0.5 * ( a+c-d ) ) * nsigmas;
-       final double theta = 0.5 * Math.atan2( (2*b), (a-c) );
-       final double x = mean[ 0 ];
-       final double y = mean[ 1 ];
-       final double dx = scale1 * Math.cos( theta );
-       final double dy = scale1 * Math.sin( theta );
-       final EllipseRoi ellipse = new EllipseRoi( x-dx, y-dy, x+dx, y+dy, scale2 / scale1 );
+	public static EllipseRoi createEllipse(final double[] mean, final double[] cov, final double nsigmas) {
+		final double a = cov[0];
+		final double b = cov[1];
+		final double c = cov[2];
+		final double d = Math.sqrt(a * a + 4 * b * b - 2 * a * c + c * c);
+		final double scale1 = Math.sqrt(0.5 * (a + c + d)) * nsigmas;
+		final double scale2 = Math.sqrt(0.5 * (a + c - d)) * nsigmas;
+		final double theta = 0.5 * Math.atan2((2 * b), (a - c));
+		final double x = mean[0];
+		final double y = mean[1];
+		final double dx = scale1 * Math.cos(theta);
+		final double dy = scale1 * Math.sin(theta);
+		final EllipseRoi ellipse = new EllipseRoi(x - dx, y - dy, x + dx, y + dy, scale2 / scale1);
 		return ellipse;
 	}
-	
-	
-	public static  void MaxProjection(ImagePlus imp){
-		
-		Img<FloatType> img3D, img2D;
-		
-		final ImgFactory factory = new ArrayImgFactory<FloatType>();
-		
-		img3D = factory.create( new int[]{ imp.getWidth(), imp.getHeight(), imp.getStack().getSize() }, new FloatType() );
-		img2D = factory.create( new int[]{ imp.getWidth(), imp.getHeight() }, new FloatType() );
-		
-		
-		final Cursor< FloatType > cursor = img3D.localizingCursor();
-		final RandomAccess<FloatType> ranac2D = img2D.randomAccess();
-		
-		final double maxinZ = img3D.max(imp.getNDimensions() - 1);
-		
-		final ArrayList< ImageProcessor > ips = new ArrayList< ImageProcessor >();
 
-		for ( int z = 0; z < imp.getStack().getSize(); ++z )
-			ips.add( imp.getStack().getProcessor( z + 1 ) );
-		
-		while(cursor.hasNext()){
-			
-			cursor.fwd();
-			
-			final int x = cursor.getIntPosition(0);
-			final int y = cursor.getIntPosition(1);
-			final int z = cursor.getIntPosition(2);
-			
-			cursor.get().set(ips.get(z).getf(x,y));
-			
-			ranac2D.setPosition(x, 0);
-			ranac2D.setPosition(y, 1);
-			
-			ranac2D.get().setReal(maxinZ);
-			
+	public static <T extends RealType<T>> SortedSet<Double> MseratThreshold(MserTree<T> tree) {
+
+		SortedSet<Double> MseratT = new TreeSet<Double>();
+		for (final Mser<T> mser : tree) {
+
+			MseratT.add(mser.value().getRealDouble());
 		}
-		
-		
-		
+
+		return MseratT;
 	}
-	
-	
+
+	public static <T extends RealType<T>> Mser<T> CovMatDet(MserTree<T> tree) {
+
+		double minDet = Double.MAX_VALUE;
+		Mser<T> mostStable = null;
+
+		for (final Mser<T> mser : tree) {
+
+			final double CovXX = mser.cov()[0];
+			final double CovXY = mser.cov()[1];
+			final double CovYY = mser.cov()[2];
+			final double detCovar = CovXX * CovYY - CovXY * CovXY;
+
+			if (detCovar < minDet) {
+
+				minDet = detCovar;
+				mostStable = mser;
+
+			}
+
+		}
+
+		return mostStable;
+	}
+
+	public static RandomAccessibleInterval<FloatType> MaxProjection(ImagePlus imp) {
+		Img<FloatType> img3D, img2D;
+
+		final ImgFactory<FloatType> factory = new ArrayImgFactory<FloatType>();
+
+		int height = imp.getHeight();
+		int width = imp.getWidth();
+
+		img3D = factory.create(new int[] { width, height, imp.getStack().getSize() }, new FloatType());
+		img2D = factory.create(new int[] { width, height }, new FloatType());
+
+		img3D = ImagePlusAdapter.wrapFloat(imp);
+
+		final RandomAccess<FloatType> ranac2D = img2D.randomAccess();
+
+		final ArrayList<ImageProcessor> ips = new ArrayList<ImageProcessor>();
+		int maxZ = (int) img3D.dimension(2);
+		int minZ = (int) img3D.min(2);
+		for (int z = 0; z < imp.getStack().getSize(); ++z)
+			ips.add(imp.getStack().getProcessor(z + 1));
+
+		for (int y = 0; y < height; ++y) {
+			for (int x = 0; x < width; ++x) {
+				final ArrayList<Float> IntensityAlongZ = new ArrayList<Float>();
+
+				for (int index = minZ; index < maxZ; ++index) {
+
+					final float Zintensity = ips.get(index).getf(x, y);
+
+					IntensityAlongZ.add(Zintensity);
+
+				}
+
+				Collections.sort(IntensityAlongZ);
+				ranac2D.setPosition(new int[] { x, y });
+				ranac2D.get().set(IntensityAlongZ.get(0));
+
+			}
+
+		}
+
+		return img2D;
+
+	}
+
 }
