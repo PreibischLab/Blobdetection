@@ -84,63 +84,89 @@ public class GetMSERtree<T extends RealType<T>> {
 	public void visualise(final MserTree<T> tree, final Color color) {
 
 		ArrayList<double[]> meanandcovlist = new ArrayList<double[]>();
-
+		ArrayList<double[]> redmeanandcovlist = new ArrayList<double[]>();
+		ArrayList<double[]> meanandcovchildlist = new ArrayList<double[]>();
 		final HashSet<Mser<T>> rootset = tree.roots();
-		final Iterator<Mser<T>> rootsetiterator = tree.iterator();
-		System.out.println("Size of root set: " + tree.size());
-		int i = 0;
+
+		final Iterator<Mser<T>> rootsetiterator = rootset.iterator();
+		final Iterator<Mser<T>> treeiterator = tree.iterator();
+		System.out.println("Size of root set: " + rootset.size());
+
 		while (rootsetiterator.hasNext()) {
 
-			Mser<T> mser = rootsetiterator.next();
+			Mser<T> rootmser = rootsetiterator.next();
 
-		//	System.out.println(i + " " + mser.size());
-			if (mser.size() > 0) {
+			if (rootmser.size() > 0) {
 
-				//	System.out.println("Papa: " + 
-				//			mser.mean()[0] + " " + mser.mean()[1]);
+				final double[] meanandcov = { rootmser.mean()[0], rootmser.mean()[1], rootmser.cov()[0],
+						rootmser.cov()[1], rootmser.cov()[2] };
+
+				meanandcovlist.add(meanandcov);
+
 			}
-		//	final double[] meanandcov = { mser.mean()[0], mser.mean()[1], mser.cov()[0], mser.cov()[1], mser.cov()[2] };
-
-		//	meanandcovlist.add(meanandcov);
-			if (mser.getChildren().size() - 1  > 0) {
-
-				for (int index = 0; index < mser.getChildren().size(); ++index) {
-			//		System.out.println(
-			//				mser.getChildren().get(index).mean()[0] + " " + mser.getChildren().get(index).mean()[1]);
-					
-					final double[] meanandcovchild = { mser.getChildren().get(index).mean()[0], mser.getChildren().get(index).mean()[1],
-							mser.getChildren().get(index).cov()[0], mser.getChildren().get(index).cov()[1], mser.getChildren().get(index).cov()[2] };
-					
-					meanandcovlist.add(meanandcovchild);
-				}
-			}
-			i++;
 
 		}
+		while (treeiterator.hasNext()) {
 
-	//	for (final Mser<T> mser : tree) {
+			Mser<T> mser = treeiterator.next();
 
+			if (mser.getChildren().size() - 1 > 0) {
+
+				for (int index = 0; index < mser.getChildren().size(); ++index) {
+
+					final double[] meanandcovchild = { mser.getChildren().get(index).mean()[0],
+							mser.getChildren().get(index).mean()[1], mser.getChildren().get(index).cov()[0],
+							mser.getChildren().get(index).cov()[1], mser.getChildren().get(index).cov()[2] };
+
+					meanandcovchildlist.add(meanandcovchild);
+
+				}
+
+			}
+
+		}
+		
+		redmeanandcovlist = meanandcovlist;
+		for (int childindex = 0; childindex < meanandcovchildlist.size(); ++childindex) {
 			
-	//	}
-		/*
-		 * for (int i = 0; i < meanandcovlist.size(); i++) { for (int j =
-		 * meanandcovlist.size() - 1; j >= i; j--) { // If i is j, then it's the
-		 * same object and don't need to be compared. if (i == j) { continue; }
-		 * // If the compared objects are equal, remove them from the copy and
-		 * break // to the next loop if (Math.abs(meanandcovlist.get(i)[0] -
-		 * meanandcovlist.get(j)[0]) < 1 && Math.abs(meanandcovlist.get(i)[1] -
-		 * meanandcovlist.get(j)[1]) < 1 ) {
-		 * meanandcovlist.remove(meanandcovlist.get(i)); break; } } }
-		 */
+			final double[] meanchild = new double[] { meanandcovchildlist.get(childindex)[0], meanandcovchildlist.get(childindex)[1] };
+			final double[] covarchild = new double[] { meanandcovchildlist.get(childindex)[2], meanandcovchildlist.get(childindex)[3],
+					meanandcovchildlist.get(childindex)[4] };
+			final EllipseRoi ellipsechild = createEllipse(meanchild, covarchild, 3);
+			
+				ellipsechild.setStrokeColor(color);
+				ov.add(ellipsechild);
+			
+	
+		
+		
+
 		for (int index = 0; index < meanandcovlist.size(); ++index) {
 
 			final double[] mean = new double[] { meanandcovlist.get(index)[0], meanandcovlist.get(index)[1] };
 			final double[] covar = new double[] { meanandcovlist.get(index)[2], meanandcovlist.get(index)[3],
 					meanandcovlist.get(index)[4] };
 			final EllipseRoi ellipse = createEllipse(mean, covar, 3);
-			ellipse.setStrokeColor(color);
-			ov.add(ellipse);
+			
+			
+			if (ellipse.contains((int) meanchild[0], (int) meanchild[1]) )
+				redmeanandcovlist.remove(index);
+				
+		}
+		
 
+		}
+		
+		for (int index = 0; index < redmeanandcovlist.size(); ++index) {
+
+			final double[] mean = new double[] { redmeanandcovlist.get(index)[0], redmeanandcovlist.get(index)[1] };
+			final double[] covar = new double[] { redmeanandcovlist.get(index)[2], redmeanandcovlist.get(index)[3],
+					redmeanandcovlist.get(index)[4] };
+			final EllipseRoi ellipse = createEllipse(mean, covar, 3);
+		ellipse.setStrokeColor(color);
+
+			ov.add(ellipse);
+	
 		}
 
 	}

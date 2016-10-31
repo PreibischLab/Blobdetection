@@ -85,7 +85,7 @@ public class TrackblobsKFGauss {
 		
 		ImagePlus imp = ImageJFunctions.show(img);
 		ImagePlus impcopy = ImageJFunctions.show(img);
-		final int delta = 5;
+		final int delta = 10;
 		final long minSize = 10;
 		final long maxSize = Long.MAX_VALUE;
 		final double maxVar = 0.2;
