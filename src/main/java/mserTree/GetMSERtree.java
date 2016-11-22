@@ -81,11 +81,26 @@ public class GetMSERtree<T extends RealType<T>> {
 
 	}
 
-	public void visualise(final MserTree<T> tree, final Color color) {
+	public void visualise(final ArrayList<double[]> ellipselist, final Color color) {
+
+		for (int index = 0; index < ellipselist.size(); ++index) {
+
+			final double[] mean = { ellipselist.get(index)[0], ellipselist.get(index)[1] };
+			final double[] covar = { ellipselist.get(index)[2], ellipselist.get(index)[3], ellipselist.get(index)[4] };
+			final EllipseRoi ellipsechild = createEllipse(mean, covar, 3);
+			ellipsechild.setStrokeColor(color);
+			ov.add(ellipsechild);
+			
+		}
+
+	}
+
+	public ArrayList<double[]> Roiarraylist(final MserTree<T> tree) {
 
 		ArrayList<double[]> meanandcovlist = new ArrayList<double[]>();
 		ArrayList<double[]> redmeanandcovlist = new ArrayList<double[]>();
 		ArrayList<double[]> meanandcovchildlist = new ArrayList<double[]>();
+		ArrayList<double[]> ellipselist = new ArrayList<double[]>();
 		final HashSet<Mser<T>> rootset = tree.roots();
 
 		final Iterator<Mser<T>> rootsetiterator = rootset.iterator();
@@ -106,6 +121,7 @@ public class GetMSERtree<T extends RealType<T>> {
 			}
 
 		}
+		
 		while (treeiterator.hasNext()) {
 
 			Mser<T> mser = treeiterator.next();
@@ -119,56 +135,42 @@ public class GetMSERtree<T extends RealType<T>> {
 							mser.getChildren().get(index).cov()[1], mser.getChildren().get(index).cov()[2] };
 
 					meanandcovchildlist.add(meanandcovchild);
-
+					ellipselist.add(meanandcovchild);
 				}
 
 			}
 
 		}
-		
+
 		redmeanandcovlist = meanandcovlist;
 		for (int childindex = 0; childindex < meanandcovchildlist.size(); ++childindex) {
-			
-			final double[] meanchild = new double[] { meanandcovchildlist.get(childindex)[0], meanandcovchildlist.get(childindex)[1] };
-			final double[] covarchild = new double[] { meanandcovchildlist.get(childindex)[2], meanandcovchildlist.get(childindex)[3],
-					meanandcovchildlist.get(childindex)[4] };
-			final EllipseRoi ellipsechild = createEllipse(meanchild, covarchild, 3);
-			
-				ellipsechild.setStrokeColor(color);
-				ov.add(ellipsechild);
-			
-	
-		
-		
 
-		for (int index = 0; index < meanandcovlist.size(); ++index) {
+			final double[] meanchild = new double[] { meanandcovchildlist.get(childindex)[0],
+					meanandcovchildlist.get(childindex)[1] };
 
-			final double[] mean = new double[] { meanandcovlist.get(index)[0], meanandcovlist.get(index)[1] };
-			final double[] covar = new double[] { meanandcovlist.get(index)[2], meanandcovlist.get(index)[3],
-					meanandcovlist.get(index)[4] };
-			final EllipseRoi ellipse = createEllipse(mean, covar, 3);
-			
-			
-			if (ellipse.contains((int) meanchild[0], (int) meanchild[1]) )
-				redmeanandcovlist.remove(index);
-				
-		}
-		
+			for (int index = 0; index < meanandcovlist.size(); ++index) {
+
+				final double[] mean = new double[] { meanandcovlist.get(index)[0], meanandcovlist.get(index)[1] };
+				final double[] covar = new double[] { meanandcovlist.get(index)[2], meanandcovlist.get(index)[3],
+						meanandcovlist.get(index)[4] };
+				final EllipseRoi ellipse = createEllipse(mean, covar, 3);
+
+				if (ellipse.contains((int) meanchild[0], (int) meanchild[1]))
+					redmeanandcovlist.remove(index);
+
+			}
 
 		}
-		
+
 		for (int index = 0; index < redmeanandcovlist.size(); ++index) {
 
-			final double[] mean = new double[] { redmeanandcovlist.get(index)[0], redmeanandcovlist.get(index)[1] };
-			final double[] covar = new double[] { redmeanandcovlist.get(index)[2], redmeanandcovlist.get(index)[3],
-					redmeanandcovlist.get(index)[4] };
-			final EllipseRoi ellipse = createEllipse(mean, covar, 3);
-		ellipse.setStrokeColor(color);
+			final double[] meanandcov = new double[] { redmeanandcovlist.get(index)[0], redmeanandcovlist.get(index)[1],
+					redmeanandcovlist.get(index)[2], redmeanandcovlist.get(index)[3], redmeanandcovlist.get(index)[4] };
+			ellipselist.add(meanandcov);
 
-			ov.add(ellipse);
-	
 		}
-
+		return ellipselist;
+		//return meanandcovlist;
 	}
 
 	public void visualise(final PixelListComponentTree<T> tree) {
@@ -252,73 +254,5 @@ public class GetMSERtree<T extends RealType<T>> {
 		return MseratT;
 	}
 
-	public static <T extends RealType<T>> Mser<T> CovMatDet(MserTree<T> tree) {
-
-		double minDet = Double.MAX_VALUE;
-		Mser<T> mostStable = null;
-
-		for (final Mser<T> mser : tree) {
-
-			final double CovXX = mser.cov()[0];
-			final double CovXY = mser.cov()[1];
-			final double CovYY = mser.cov()[2];
-			final double detCovar = CovXX * CovYY - CovXY * CovXY;
-
-			if (detCovar < minDet) {
-
-				minDet = detCovar;
-				mostStable = mser;
-
-			}
-
-		}
-
-		return mostStable;
-	}
-
-	public static RandomAccessibleInterval<FloatType> MaxProjection(ImagePlus imp) {
-		Img<FloatType> img3D, img2D;
-
-		final ImgFactory<FloatType> factory = new ArrayImgFactory<FloatType>();
-
-		int height = imp.getHeight();
-		int width = imp.getWidth();
-
-		img3D = factory.create(new int[] { width, height, imp.getStack().getSize() }, new FloatType());
-		img2D = factory.create(new int[] { width, height }, new FloatType());
-
-		img3D = ImagePlusAdapter.wrapFloat(imp);
-
-		final RandomAccess<FloatType> ranac2D = img2D.randomAccess();
-
-		final ArrayList<ImageProcessor> ips = new ArrayList<ImageProcessor>();
-		int maxZ = (int) img3D.dimension(2);
-		int minZ = (int) img3D.min(2);
-		for (int z = 0; z < imp.getStack().getSize(); ++z)
-			ips.add(imp.getStack().getProcessor(z + 1));
-
-		for (int y = 0; y < height; ++y) {
-			for (int x = 0; x < width; ++x) {
-				final ArrayList<Float> IntensityAlongZ = new ArrayList<Float>();
-
-				for (int index = minZ; index < maxZ; ++index) {
-
-					final float Zintensity = ips.get(index).getf(x, y);
-
-					IntensityAlongZ.add(Zintensity);
-
-				}
-
-				Collections.sort(IntensityAlongZ);
-				ranac2D.setPosition(new int[] { x, y });
-				ranac2D.get().set(IntensityAlongZ.get(0));
-
-			}
-
-		}
-
-		return img2D;
-
-	}
-
+	
 }

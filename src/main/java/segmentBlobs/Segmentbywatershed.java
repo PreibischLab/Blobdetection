@@ -67,8 +67,8 @@ public class Segmentbywatershed {
 		if (Refinedobjectproperties.totalintensity > 0 && Refinedobjectproperties.sigma[0] > 0 
 				&& Refinedobjectproperties.sigma[1] > 0 && Refinedobjectproperties.location[0] > 0
 				&& Refinedobjectproperties.location[1] > 0 && radius > 6 ){
-			System.out.println( "Location: " + "" + Refinedobjectproperties.location[0] + " " + Refinedobjectproperties.location[1]
-					+ "Circularity" + " " + Refinedobjectproperties.Circularity);
+		//	System.out.println( "Location: " + "" + Refinedobjectproperties.location[0] + " " + Refinedobjectproperties.location[1]
+		//n			+ "Circularity" + " " + Refinedobjectproperties.Circularity);
 			
 		staticprops.add(statprops);
 		}
